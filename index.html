@@ -9,14 +9,15 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8f9fa; color: #1a1a1a; min-height: 100vh; }
-.topbar { background: #0d1b2a; padding: 14px 32px; display: flex; align-items: center; gap: 12px; }
-.topbar h1 { font-size: 18px; font-weight: 600; color: #fff; letter-spacing: -0.3px; }
-.topbar p { font-size: 12px; color: #8a9bb0; margin-top: 1px; }
-.container { max-width: 1200px; margin: 0 auto; padding: 24px 24px; }
+.topbar { background: #0d1b2a; padding: 14px 32px; }
+.topbar h1 { font-size: 18px; font-weight: 600; color: #fff; }
+.topbar p { font-size: 12px; color: #8a9bb0; margin-top: 2px; }
+.container { max-width: 1200px; margin: 0 auto; padding: 24px; }
 .tabs { display: flex; gap: 2px; margin-bottom: 20px; background: #e8edf2; border-radius: 10px; padding: 3px; width: fit-content; }
 .tab-btn { background: none; border: none; padding: 8px 18px; font-size: 13px; font-weight: 500; color: #5a6a7a; cursor: pointer; border-radius: 8px; transition: all 0.15s; white-space: nowrap; }
 .tab-btn.active { background: #fff; color: #0d1b2a; box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
-.pane { display: none; } .pane.active { display: block; }
+.pane { display: none; }
+.pane.active { display: block; }
 .card { background: #fff; border: 1px solid #e4e9f0; border-radius: 12px; padding: 20px 24px; margin-bottom: 16px; }
 .lbl { font-size: 11px; font-weight: 600; color: #8a9bb0; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 12px; }
 .upload-zone { border: 2px dashed #c8d4e0; border-radius: 10px; padding: 32px; text-align: center; cursor: pointer; transition: all 0.15s; }
@@ -31,7 +32,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .date-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; min-height: 34px; }
 .dtag { display: flex; align-items: center; gap: 6px; background: #f0f6ff; border: 1px solid #c0d8f8; border-radius: 6px; padding: 4px 10px; font-size: 13px; color: #185FA5; font-weight: 500; }
 .dtag button { background: none; border: none; cursor: pointer; color: #8ab4e0; font-size: 16px; line-height: 1; padding: 0; }
-.dtag button:hover { color: #185FA5; }
 .add-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .legend { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 10px; font-size: 12px; color: #5a6a7a; }
 .li { display: flex; align-items: center; gap: 6px; }
@@ -42,10 +42,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 select { font-size: 13px; padding: 7px 10px; border-radius: 7px; border: 1px solid #c8d4e0; background: #fff; color: #1a1a1a; outline: none; cursor: pointer; }
 select:focus { border-color: #185FA5; }
 .mx-wrap { overflow-x: auto; }
-.mx { border-collapse: collapse; font-size: 11.5px; width: 100%; }
+.mx { border-collapse: collapse; font-size: 11.5px; }
 .mx th { background: #f4f7fb; padding: 7px 10px; text-align: center; font-weight: 600; color: #5a6a7a; border: 1px solid #e4e9f0; white-space: nowrap; font-size: 11px; }
-.mx td { padding: 6px 10px; text-align: center; border: 1px solid #e4e9f0; font-size: 11.5px; font-family: 'Menlo','Consolas',monospace; cursor: pointer; transition: opacity 0.1s; }
-.mx td:hover { opacity: 0.85; }
+.mx td { padding: 6px 10px; text-align: center; border: 1px solid #e4e9f0; font-size: 11.5px; font-family: 'Menlo','Consolas',monospace; cursor: pointer; }
 .mx td.rl { font-weight: 600; background: #f4f7fb; color: #4a5a6a; font-family: inherit; white-space: nowrap; cursor: default; text-align: left; }
 .mx td.ch { background: #185FA5; color: #fff; }
 .mx td.cm { background: #6baed6; color: #fff; }
@@ -56,13 +55,12 @@ select:focus { border-color: #185FA5; }
 .nodata { text-align: center; padding: 40px; color: #8a9bb0; font-size: 14px; }
 .nodata .nd-icon { font-size: 40px; display: block; margin-bottom: 10px; opacity: .3; }
 .sbadge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: #e6f4ea; color: #1e7e34; }
-.btnp { background: #185FA5; color: #fff; border: none; border-radius: 8px; padding: 8px 18px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+.btnp { background: #185FA5; color: #fff; border: none; border-radius: 8px; padding: 8px 18px; font-size: 13px; font-weight: 600; cursor: pointer; }
 .btnp:hover { background: #0d4a8a; }
 .info-box { background: #f0f6ff; border-radius: 8px; padding: 8px 14px; font-size: 12px; color: #2a6aaa; line-height: 1.6; margin-bottom: 10px; border: 1px solid #c8dcf8; }
 .fwd-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; min-height: 30px; }
 .ftag { display: inline-flex; align-items: center; gap: 6px; border-radius: 6px; padding: 4px 12px; font-size: 12px; font-weight: 600; border: 1.5px solid; }
 .ftag button { background: none; border: none; cursor: pointer; font-size: 14px; line-height: 1; padding: 0; opacity: 0.7; }
-.ftag button:hover { opacity: 1; }
 .formula { background: #f4f7fb; border-radius: 8px; padding: 10px 16px; font-size: 12px; color: #4a5a6a; line-height: 1.8; border-left: 3px solid #185FA5; }
 .formula b { color: #0d1b2a; }
 </style>
@@ -70,28 +68,25 @@ select:focus { border-color: #185FA5; }
 <body>
 
 <div class="topbar">
-  <div>
-    <h1>BI de NTN-B</h1>
-    <p>Curvas de juros e matriz de forwards · DU/252 · calendário ANBIMA</p>
-  </div>
+  <h1>BI de NTN-B</h1>
+  <p>Curvas de juros e matriz de forwards &middot; DU/252 &middot; calend&aacute;rio ANBIMA</p>
 </div>
 
 <div class="container">
   <div class="tabs">
-    <button class="tab-btn active" id="tb-dados">📂 Dados</button>
-    <button class="tab-btn" id="tb-curva">📈 Curva NTN-B</button>
-    <button class="tab-btn" id="tb-fwd">⊞ Matriz de Forwards</button>
-    <button class="tab-btn" id="tb-hist">📊 Evolução de Forwards</button>
+    <button class="tab-btn active" id="tb-dados">Dados</button>
+    <button class="tab-btn" id="tb-curva">Curva NTN-B</button>
+    <button class="tab-btn" id="tb-fwd">Matriz de Forwards</button>
+    <button class="tab-btn" id="tb-hist">Evolu&ccedil;&atilde;o de Forwards</button>
   </div>
 
-  <!-- DADOS -->
   <div class="pane active" id="pn-dados">
     <div class="card">
-      <div class="lbl">Importar histórico</div>
+      <div class="lbl">Importar hist&oacute;rico</div>
       <div class="upload-zone" id="dropZone">
-        <div class="icon">📊</div>
+        <div class="icon">&#128202;</div>
         <p>Clique ou arraste seu arquivo Excel (.xlsx ou .csv)</p>
-        <p class="hint">Cabeçalhos de vencimento como seriais Excel são convertidos automaticamente<br>Cálculo de prazos: DU/252 com calendário ANBIMA</p>
+        <p class="hint">Cabe&ccedil;alhos de vencimento como seriais Excel s&atilde;o convertidos automaticamente<br>C&aacute;lculo de prazos: DU/252 com calend&aacute;rio ANBIMA</p>
       </div>
       <input type="file" id="fileInput" accept=".xlsx,.csv" style="display:none">
     </div>
@@ -104,13 +99,12 @@ select:focus { border-color: #185FA5; }
       <div class="lbl">Formato esperado</div>
       <div class="formula">
         <b>Coluna A:</b> data_referencia (serial Excel ou DD/MM/AAAA)<br>
-        <b>Colunas B+:</b> cabeçalho = data de vencimento do papel (ex: 15/08/2026)<br>
-        <b>Valores:</b> taxa ETTJ em % a.a. · Células vazias ou "null" = papel não existia
+        <b>Colunas B+:</b> cabe&ccedil;alho = data de vencimento do papel (ex: 15/08/2026)<br>
+        <b>Valores:</b> taxa ETTJ em % a.a. &middot; C&eacute;lulas vazias ou "null" = papel n&atilde;o existia
       </div>
     </div>
   </div>
 
-  <!-- CURVA -->
   <div class="pane" id="pn-curva">
     <div class="card">
       <div class="lbl">Datas para comparar</div>
@@ -126,50 +120,48 @@ select:focus { border-color: #185FA5; }
     </div>
   </div>
 
-  <!-- MATRIZ -->
   <div class="pane" id="pn-fwd">
     <div class="card">
       <div class="ctrl-row" style="margin-bottom:12px">
-        <label>Data de referência:</label>
+        <label>Data de refer&ecirc;ncia:</label>
         <select id="fwdDate" style="min-width:180px"></select>
       </div>
       <div class="info-box" id="fwdInfo">Carregue dados para ver a matriz.</div>
     </div>
     <div class="card">
-      <div class="lbl">Matriz de forwards (DU/252) — clique numa célula para acompanhar no tempo</div>
-      <div class="mx-wrap"><div id="mxContainer"><div class="nodata"><span class="nd-icon">⊞</span>Carregue dados para ver a matriz</div></div></div>
+      <div class="lbl">Matriz de forwards (DU/252) &mdash; clique numa c&eacute;lula para acompanhar no tempo</div>
+      <div class="mx-wrap"><div id="mxContainer"><div class="nodata"><span class="nd-icon">&#8862;</span>Carregue dados para ver a matriz</div></div></div>
     </div>
     <div class="card">
       <div class="formula">
-        <b>Fórmula DU/252:</b> f<sub>i→j</sub> = [ (1+r<sub>j</sub>)<sup>du<sub>j</sub>/252</sup> / (1+r<sub>i</sub>)<sup>du<sub>i</sub>/252</sup> ]<sup>252/(du<sub>j</sub>−du<sub>i</sub>)</sup> − 1<br>
-        Onde du = dias úteis entre a data de referência e o vencimento (calendário ANBIMA)
+        <b>F&oacute;rmula DU/252:</b> f(i&rarr;j) = [ (1+r_j)^(du_j/252) / (1+r_i)^(du_i/252) ]^(252/(du_j&minus;du_i)) &minus; 1<br>
+        du = dias &uacute;teis entre a data de refer&ecirc;ncia e o vencimento (calend&aacute;rio ANBIMA)
       </div>
     </div>
   </div>
 
-  <!-- EVOLUÇÃO -->
   <div class="pane" id="pn-hist">
     <div class="card">
       <div class="lbl">Forwards acompanhados</div>
-      <div class="info-box">Clique nas células da matriz para adicionar um forward, ou selecione manualmente abaixo.</div>
+      <div class="info-box">Clique nas c&eacute;lulas da matriz para adicionar um forward, ou selecione manualmente abaixo.</div>
       <div class="fwd-tags" id="fwdTags"></div>
       <div class="add-row">
         <label style="font-size:13px;color:#5a6a7a;font-weight:500">De:</label>
         <select id="histFrom" style="min-width:150px"></select>
-        <label style="font-size:13px;color:#5a6a7a;font-weight:500">Até:</label>
+        <label style="font-size:13px;color:#5a6a7a;font-weight:500">At&eacute;:</label>
         <select id="histTo" style="min-width:150px"></select>
         <button class="btnp" id="btnAddFwd">+ Adicionar</button>
       </div>
     </div>
     <div class="card">
       <div class="ctrl-row" style="margin-bottom:12px">
-        <label style="font-size:13px;color:#5a6a7a;font-weight:500">Período:</label>
+        <label style="font-size:13px;color:#5a6a7a;font-weight:500">Per&iacute;odo:</label>
         <select id="histPeriod">
-          <option value="0">Todo o histórico</option>
-          <option value="365">Último ano</option>
-          <option value="180">Últimos 6 meses</option>
-          <option value="90">Últimos 3 meses</option>
-          <option value="30">Último mês</option>
+          <option value="0">Todo o hist&oacute;rico</option>
+          <option value="365">&Uacute;ltimo ano</option>
+          <option value="180">&Uacute;ltimos 6 meses</option>
+          <option value="90">&Uacute;ltimos 3 meses</option>
+          <option value="30">&Uacute;ltimo m&ecirc;s</option>
         </select>
       </div>
       <div class="legend" id="histLeg"></div>
@@ -179,7 +171,6 @@ select:focus { border-color: #185FA5; }
 </div>
 
 <script>
-// ── Feriados ANBIMA ───────────────────────────────────
 var HOLIDAYS = {};
 (function() {
   var h = [
@@ -244,308 +235,477 @@ var HOLIDAYS = {};
     "2059-01-01","2059-02-10","2059-02-11","2059-03-28","2059-04-21","2059-05-01","2059-05-29","2059-09-07","2059-10-12","2059-11-02","2059-11-15","2059-11-20","2059-12-25",
     "2060-01-01","2060-03-01","2060-03-02","2060-04-16","2060-04-21","2060-05-01","2060-06-17","2060-09-07","2060-10-12","2060-11-02","2060-11-15","2060-11-20","2060-12-25"
   ];
-  for (var i=0;i<h.length;i++) HOLIDAYS[h[i]]=true;
-})();
+  for (var i = 0; i < h.length; i++) { HOLIDAYS[h[i]] = true; }
+}());
 
-var DU_INDEX=null;
-function buildDUIndex(maxISO){
-  if(DU_INDEX&&DU_INDEX.upTo>=maxISO) return;
-  var map={},count=0;
-  var cur=new Date('2000-01-01T12:00:00Z');
-  var maxDate=new Date(maxISO+'T12:00:00Z'); maxDate.setFullYear(maxDate.getFullYear()+1);
-  while(cur<=maxDate){
-    var y=cur.getUTCFullYear(),m=cur.getUTCMonth()+1,d=cur.getUTCDate();
-    var iso=y+'-'+(m<10?'0':'')+m+'-'+(d<10?'0':'')+d;
-    map[iso]=count;
-    var dow=cur.getUTCDay();
-    if(dow!==0&&dow!==6&&!HOLIDAYS[iso]) count++;
-    cur.setUTCDate(cur.getUTCDate()+1);
+var DU_INDEX = null;
+
+function buildDUIndex(maxISO) {
+  if (DU_INDEX && DU_INDEX.upTo >= maxISO) { return; }
+  var map = {};
+  var count = 0;
+  var cur = new Date('2000-01-01T12:00:00Z');
+  var maxDate = new Date(maxISO + 'T12:00:00Z');
+  maxDate.setFullYear(maxDate.getFullYear() + 1);
+  while (cur <= maxDate) {
+    var y = cur.getUTCFullYear();
+    var m = cur.getUTCMonth() + 1;
+    var d = cur.getUTCDate();
+    var iso = y + '-' + (m < 10 ? '0' : '') + m + '-' + (d < 10 ? '0' : '') + d;
+    map[iso] = count;
+    var dow = cur.getUTCDay();
+    if (dow !== 0 && dow !== 6 && !HOLIDAYS[iso]) { count++; }
+    cur.setUTCDate(cur.getUTCDate() + 1);
   }
-  DU_INDEX={map:map,upTo:maxISO};
-}
-function countDU(fromISO,toISO){
-  if(!DU_INDEX) return null;
-  var a=DU_INDEX.map[fromISO],b=DU_INDEX.map[toISO];
-  if(a===undefined||b===undefined) return null;
-  return b-a;
-}
-function calcFwdDU(ri,rj,dui,duj){
-  if(!dui||!duj||duj<=dui) return null;
-  var Fi=Math.pow(1+ri/100,dui/252),Fj=Math.pow(1+rj/100,duj/252);
-  if(Fi<=0||Fj<=0||Fj<Fi) return null;
-  return (Math.pow(Fj/Fi,252/(duj-dui))-1)*100;
+  DU_INDEX = { map: map, upTo: maxISO };
 }
 
-var DB={},ALL_VENC=[],VENC_ISO={},selDates=[],trackedFwds=[],curvaInst=null,histInst=null;
-var COLORS=['#185FA5','#D85A30','#1D9E75','#7F77DD','#BA7517','#993556','#639922','#E24B4A'];
-var DASHES=[[],[6,3],[2,2],[8,2,2,2],[4,4]];
+function countDU(fromISO, toISO) {
+  if (!DU_INDEX) { return null; }
+  var a = DU_INDEX.map[fromISO];
+  var b = DU_INDEX.map[toISO];
+  if (a === undefined || b === undefined) { return null; }
+  return b - a;
+}
 
-['dados','curva','fwd','hist'].forEach(function(name){
-  document.getElementById('tb-'+name).addEventListener('click',function(){
-    document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
-    document.querySelectorAll('.pane').forEach(function(p){p.classList.remove('active');});
-    document.getElementById('tb-'+name).classList.add('active');
-    document.getElementById('pn-'+name).classList.add('active');
-    if(name==='curva') renderCurva();
-    if(name==='fwd')   renderForward();
-    if(name==='hist')  {populateHistSelects();renderHist();}
-  });
-});
+function calcFwdDU(ri, rj, dui, duj) {
+  if (!dui || !duj || duj <= dui) { return null; }
+  var Fi = Math.pow(1 + ri / 100, dui / 252);
+  var Fj = Math.pow(1 + rj / 100, duj / 252);
+  if (Fi <= 0 || Fj <= 0 || Fj < Fi) { return null; }
+  return (Math.pow(Fj / Fi, 252 / (duj - dui)) - 1) * 100;
+}
 
-document.getElementById('dropZone').addEventListener('click',function(){document.getElementById('fileInput').click();});
-document.getElementById('fileInput').addEventListener('change',function(){if(this.files[0]) handleFile(this.files[0]);});
-document.getElementById('dropZone').addEventListener('dragover',function(e){e.preventDefault();this.style.background='#f0f6ff';});
-document.getElementById('dropZone').addEventListener('dragleave',function(){this.style.background='';});
-document.getElementById('dropZone').addEventListener('drop',function(e){e.preventDefault();this.style.background='';if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);});
-document.getElementById('btnAddDate').addEventListener('click',addDate);
-document.getElementById('fwdDate').addEventListener('change',renderForward);
-document.getElementById('btnAddFwd').addEventListener('click',addFwdFromSelects);
-document.getElementById('histPeriod').addEventListener('change',renderHist);
+var DB = {};
+var ALL_VENC = [];
+var VENC_ISO = {};
+var selDates = [];
+var trackedFwds = [];
+var curvaInst = null;
+var histInst = null;
+var COLORS = ['#185FA5','#D85A30','#1D9E75','#7F77DD','#BA7517','#993556','#639922','#E24B4A'];
+var DASHES = [[], [6,3], [2,2], [8,2,2,2], [4,4]];
 
-function excelToISO(raw){
-  if(raw===null||raw===undefined||raw==='') return null;
-  if(typeof raw==='number'&&raw>1000&&raw<80000){
-    var ms=Math.round((raw-25569)*86400*1000),d=new Date(ms);
-    var y=d.getUTCFullYear(),m=d.getUTCMonth()+1,dd=d.getUTCDate();
-    return y+'-'+(m<10?'0':'')+m+'-'+(dd<10?'0':'')+dd;
+function setupTabs() {
+  var names = ['dados', 'curva', 'fwd', 'hist'];
+  for (var ni = 0; ni < names.length; ni++) {
+    (function(name) {
+      document.getElementById('tb-' + name).addEventListener('click', function() {
+        var btns = document.querySelectorAll('.tab-btn');
+        for (var i = 0; i < btns.length; i++) { btns[i].classList.remove('active'); }
+        var panes = document.querySelectorAll('.pane');
+        for (var i = 0; i < panes.length; i++) { panes[i].classList.remove('active'); }
+        document.getElementById('tb-' + name).classList.add('active');
+        document.getElementById('pn-' + name).classList.add('active');
+        if (name === 'curva') { renderCurva(); }
+        if (name === 'fwd')   { renderForward(); }
+        if (name === 'hist')  { populateHistSelects(); renderHist(); }
+      });
+    }(names[ni]));
   }
-  var s=String(raw).trim();
-  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-  var m2=s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);
-  if(m2) return m2[3]+'-'+m2[2].padStart(2,'0')+'-'+m2[1].padStart(2,'0');
+}
+setupTabs();
+
+document.getElementById('dropZone').addEventListener('click', function() { document.getElementById('fileInput').click(); });
+document.getElementById('fileInput').addEventListener('change', function() { if (this.files[0]) { handleFile(this.files[0]); } });
+document.getElementById('dropZone').addEventListener('dragover', function(e) { e.preventDefault(); this.style.background = '#f0f6ff'; });
+document.getElementById('dropZone').addEventListener('dragleave', function() { this.style.background = ''; });
+document.getElementById('dropZone').addEventListener('drop', function(e) { e.preventDefault(); this.style.background = ''; if (e.dataTransfer.files[0]) { handleFile(e.dataTransfer.files[0]); } });
+document.getElementById('btnAddDate').addEventListener('click', addDate);
+document.getElementById('fwdDate').addEventListener('change', renderForward);
+document.getElementById('btnAddFwd').addEventListener('click', addFwdFromSelects);
+document.getElementById('histPeriod').addEventListener('change', renderHist);
+
+function excelToISO(raw) {
+  if (raw === null || raw === undefined || raw === '') { return null; }
+  if (typeof raw === 'number' && raw > 1000 && raw < 80000) {
+    var ms = Math.round((raw - 25569) * 86400 * 1000);
+    var d = new Date(ms);
+    var y = d.getUTCFullYear();
+    var m = d.getUTCMonth() + 1;
+    var dd = d.getUTCDate();
+    return y + '-' + (m < 10 ? '0' : '') + m + '-' + (dd < 10 ? '0' : '') + dd;
+  }
+  var s = String(raw).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) { return s; }
+  var m2 = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);
+  if (m2) { return m2[3] + '-' + m2[2].padStart(2,'0') + '-' + m2[1].padStart(2,'0'); }
   return null;
 }
-function fmt(iso){if(!iso) return '';var p=iso.split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:iso;}
-function isValidRate(v){
-  if(v===null||v===undefined) return false;
-  if(typeof v==='number') return v>0&&v<100;
-  var s=String(v).trim().toLowerCase();
-  if(!s||s==='null'||s==='-'||s==='n/a') return false;
-  var n=parseFloat(s.replace(',','.')); return !isNaN(n)&&n>0&&n<100;
-}
-function toRate(v){return typeof v==='number'?v:parseFloat(String(v).replace(',','.'));}
 
-function handleFile(file){
-  var reader=new FileReader();
-  reader.onload=function(ev){
-    try{
-      var wb=XLSX.read(ev.target.result,{type:'binary',raw:true});
-      var ws=wb.Sheets[wb.SheetNames[0]];
-      var rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:null});
+function fmt(iso) {
+  if (!iso) { return ''; }
+  var p = iso.split('-');
+  return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : iso;
+}
+
+function isValidRate(v) {
+  if (v === null || v === undefined) { return false; }
+  if (typeof v === 'number') { return v > 0 && v < 100; }
+  var s = String(v).trim().toLowerCase();
+  if (!s || s === 'null' || s === '-' || s === 'n/a') { return false; }
+  var n = parseFloat(s.replace(',', '.'));
+  return !isNaN(n) && n > 0 && n < 100;
+}
+
+function toRate(v) {
+  return typeof v === 'number' ? v : parseFloat(String(v).replace(',', '.'));
+}
+
+function handleFile(file) {
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      var wb = XLSX.read(ev.target.result, { type: 'binary', raw: true });
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      var rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: null });
       parseData(rows);
-    }catch(err){alert('Erro ao ler arquivo: '+err.message);}
+    } catch(err) {
+      alert('Erro ao ler arquivo: ' + err.message);
+    }
   };
   reader.readAsBinaryString(file);
 }
-function parseData(rows){
-  if(rows.length<2){alert('Planilha vazia');return;}
-  VENC_ISO={};
-  var headerRaw=rows[0],vencRaw=[];
-  for(var c=1;c<headerRaw.length;c++){if(headerRaw[c]!==null&&headerRaw[c]!==undefined&&headerRaw[c]!=='') vencRaw.push(headerRaw[c]);}
-  ALL_VENC=[];
-  for(var vi=0;vi<vencRaw.length;vi++){
-    var iso=excelToISO(vencRaw[vi]);
-    if(iso){var key=String(vencRaw[vi]);VENC_ISO[key]=iso;ALL_VENC.push(key);}
+
+function parseData(rows) {
+  if (rows.length < 2) { alert('Planilha vazia'); return; }
+  VENC_ISO = {};
+  var headerRaw = rows[0];
+  var vencRaw = [];
+  for (var c = 1; c < headerRaw.length; c++) {
+    if (headerRaw[c] !== null && headerRaw[c] !== undefined && headerRaw[c] !== '') {
+      vencRaw.push(headerRaw[c]);
+    }
   }
-  ALL_VENC.sort(function(a,b){return VENC_ISO[a]<VENC_ISO[b]?-1:1;});
-  buildDUIndex(VENC_ISO[ALL_VENC[ALL_VENC.length-1]]);
-  DB={};
-  for(var r=1;r<rows.length;r++){
-    var row=rows[r];if(!row||row[0]===null||row[0]===undefined) continue;
-    var dateISO=excelToISO(row[0]);if(!dateISO) continue;
-    DB[dateISO]={};
-    for(var vi2=0;vi2<vencRaw.length;vi2++){
-      var k=String(vencRaw[vi2]),val=row[vi2+1];
-      if(isValidRate(val)) DB[dateISO][k]=toRate(val);
+  ALL_VENC = [];
+  for (var vi = 0; vi < vencRaw.length; vi++) {
+    var iso = excelToISO(vencRaw[vi]);
+    if (iso) {
+      var key = String(vencRaw[vi]);
+      VENC_ISO[key] = iso;
+      ALL_VENC.push(key);
+    }
+  }
+  ALL_VENC.sort(function(a, b) { return VENC_ISO[a] < VENC_ISO[b] ? -1 : 1; });
+  buildDUIndex(VENC_ISO[ALL_VENC[ALL_VENC.length - 1]]);
+  DB = {};
+  for (var r = 1; r < rows.length; r++) {
+    var row = rows[r];
+    if (!row || row[0] === null || row[0] === undefined) { continue; }
+    var dateISO = excelToISO(row[0]);
+    if (!dateISO) { continue; }
+    DB[dateISO] = {};
+    for (var vi2 = 0; vi2 < vencRaw.length; vi2++) {
+      var k = String(vencRaw[vi2]);
+      var val = row[vi2 + 1];
+      if (isValidRate(val)) { DB[dateISO][k] = toRate(val); }
     }
   }
   finishLoad();
 }
-function getVencDU(vencKey,refISO){
-  var viso=VENC_ISO[vencKey];if(!viso) return null;
-  var du=countDU(refISO,viso);return(du!==null&&du>0)?du:null;
+
+function getVencDU(vencKey, refISO) {
+  var viso = VENC_ISO[vencKey];
+  if (!viso) { return null; }
+  var du = countDU(refISO, viso);
+  return (du !== null && du > 0) ? du : null;
 }
-function activeVenc(date){
-  if(!DB[date]) return [];
-  var result=[];
-  for(var i=0;i<ALL_VENC.length;i++){var v=ALL_VENC[i];if(DB[date][v]!==undefined&&getVencDU(v,date)!==null) result.push(v);}
+
+function activeVenc(date) {
+  if (!DB[date]) { return []; }
+  var result = [];
+  for (var i = 0; i < ALL_VENC.length; i++) {
+    var v = ALL_VENC[i];
+    if (DB[date][v] !== undefined && getVencDU(v, date) !== null) { result.push(v); }
+  }
   return result;
 }
-function getFwdValue(date,from,to){
-  if(!DB[date]||DB[date][from]===undefined||DB[date][to]===undefined) return null;
-  var dui=getVencDU(from,date),duj=getVencDU(to,date);
-  return calcFwdDU(DB[date][from],DB[date][to],dui,duj);
-}
-function finishLoad(){
-  var dates=Object.keys(DB).sort();
-  if(!dates.length){alert('Nenhuma data válida.');return;}
-  document.getElementById('statusCard').style.display='block';
-  document.getElementById('statusBar').innerHTML='<span class="sbadge">✓ Dados carregados</span> &nbsp;'+dates.length+' datas · '+ALL_VENC.length+' vencimentos · '+fmt(dates[0])+' a '+fmt(dates[dates.length-1]);
-  document.getElementById('metricsRow').innerHTML=
-    '<div class="met"><div class="met-lbl">Datas</div><div class="met-val">'+dates.length+'</div></div>'+
-    '<div class="met"><div class="met-lbl">Vencimentos</div><div class="met-val">'+ALL_VENC.length+'</div></div>'+
-    '<div class="met"><div class="met-lbl">Início</div><div class="met-val">'+fmt(dates[0])+'</div></div>'+
-    '<div class="met"><div class="met-lbl">Fim</div><div class="met-val">'+fmt(dates[dates.length-1])+'</div></div>';
-  selDates=[dates[dates.length-1]];
-  if(dates.length>60) selDates.push(dates[dates.length-61]);
-  trackedFwds=[];
-  var sorted=dates.slice().reverse();
-  var opts=sorted.map(function(d){return '<option value="'+d+'">'+fmt(d)+'</option>';}).join('');
-  document.getElementById('dateSelect').innerHTML=opts;
-  document.getElementById('fwdDate').innerHTML=opts;
-  populateHistSelects();updateTags();renderForward();
+
+function getFwdValue(date, from, to) {
+  if (!DB[date] || DB[date][from] === undefined || DB[date][to] === undefined) { return null; }
+  var dui = getVencDU(from, date);
+  var duj = getVencDU(to, date);
+  return calcFwdDU(DB[date][from], DB[date][to], dui, duj);
 }
 
-function addDate(){var v=document.getElementById('dateSelect').value;if(!v||!DB[v]||selDates.indexOf(v)>=0) return;selDates.push(v);updateTags();renderCurva();}
-function removeDate(d){selDates=selDates.filter(function(x){return x!==d;});updateTags();renderCurva();}
-function updateTags(){
-  var c=document.getElementById('dtags');
-  c.innerHTML=selDates.map(function(d){return '<div class="dtag"><span>'+fmt(d)+'</span><button data-d="'+d+'">×</button></div>';}).join('');
-  c.querySelectorAll('button').forEach(function(btn){btn.addEventListener('click',function(){removeDate(this.getAttribute('data-d'));});});
+function finishLoad() {
+  var dates = Object.keys(DB).sort();
+  if (!dates.length) { alert('Nenhuma data valida encontrada.'); return; }
+  document.getElementById('statusCard').style.display = 'block';
+  document.getElementById('statusBar').innerHTML = '<span class="sbadge">&#10003; Dados carregados</span> &nbsp;' + dates.length + ' datas &middot; ' + ALL_VENC.length + ' vencimentos &middot; ' + fmt(dates[0]) + ' a ' + fmt(dates[dates.length - 1]);
+  document.getElementById('metricsRow').innerHTML =
+    '<div class="met"><div class="met-lbl">Datas</div><div class="met-val">' + dates.length + '</div></div>' +
+    '<div class="met"><div class="met-lbl">Vencimentos</div><div class="met-val">' + ALL_VENC.length + '</div></div>' +
+    '<div class="met"><div class="met-lbl">In&iacute;cio</div><div class="met-val">' + fmt(dates[0]) + '</div></div>' +
+    '<div class="met"><div class="met-lbl">Fim</div><div class="met-val">' + fmt(dates[dates.length - 1]) + '</div></div>';
+  selDates = [dates[dates.length - 1]];
+  if (dates.length > 60) { selDates.push(dates[dates.length - 61]); }
+  trackedFwds = [];
+  var sorted = dates.slice().reverse();
+  var opts = '';
+  for (var i = 0; i < sorted.length; i++) { opts += '<option value="' + sorted[i] + '">' + fmt(sorted[i]) + '</option>'; }
+  document.getElementById('dateSelect').innerHTML = opts;
+  document.getElementById('fwdDate').innerHTML = opts;
+  populateHistSelects();
+  updateTags();
+  renderForward();
 }
-function renderCurva(){
-  if(!Object.keys(DB).length||!selDates.length) return;
-  var activeSet={};
-  selDates.forEach(function(date){activeVenc(date).forEach(function(v){activeSet[v]=true;});});
-  var labels=ALL_VENC.filter(function(v){return activeSet[v];});
-  var datasets=selDates.map(function(date,i){
-    var avSet={};activeVenc(date).forEach(function(v){avSet[v]=true;});
-    return{label:fmt(date),data:labels.map(function(v){return avSet[v]?DB[date][v]:null;}),
-      borderColor:COLORS[i%COLORS.length],backgroundColor:'transparent',
-      borderWidth:2,pointRadius:4,pointHoverRadius:6,tension:0.3,borderDash:DASHES[i%DASHES.length],spanGaps:false};
-  });
-  document.getElementById('curvaLeg').innerHTML=selDates.map(function(d,i){
-    return '<div class="li"><div class="ld" style="background:'+COLORS[i%COLORS.length]+'"></div><span>'+fmt(d)+'</span></div>';
-  }).join('');
-  if(curvaInst){curvaInst.destroy();curvaInst=null;}
-  curvaInst=new Chart(document.getElementById('curvaChart'),{
-    type:'line',data:{labels:labels.map(function(v){return fmt(VENC_ISO[v]||v);}),datasets:datasets},
-    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
-      plugins:{legend:{display:false},tooltip:{callbacks:{
-        label:function(c){return c.parsed.y!=null?c.dataset.label+': '+c.parsed.y.toFixed(2)+'% a.a.':null;},
-        filter:function(i){return i.parsed.y!=null;}
+
+function addDate() {
+  var v = document.getElementById('dateSelect').value;
+  if (!v || !DB[v] || selDates.indexOf(v) >= 0) { return; }
+  selDates.push(v);
+  updateTags();
+  renderCurva();
+}
+
+function removeDate(d) {
+  selDates = selDates.filter(function(x) { return x !== d; });
+  updateTags();
+  renderCurva();
+}
+
+function updateTags() {
+  var c = document.getElementById('dtags');
+  var html = '';
+  for (var i = 0; i < selDates.length; i++) {
+    html += '<div class="dtag"><span>' + fmt(selDates[i]) + '</span><button data-d="' + selDates[i] + '">&times;</button></div>';
+  }
+  c.innerHTML = html;
+  var btns = c.querySelectorAll('button');
+  for (var i = 0; i < btns.length; i++) {
+    btns[i].addEventListener('click', function() { removeDate(this.getAttribute('data-d')); });
+  }
+}
+
+function renderCurva() {
+  if (!Object.keys(DB).length || !selDates.length) { return; }
+  var activeSet = {};
+  for (var di = 0; di < selDates.length; di++) {
+    var av = activeVenc(selDates[di]);
+    for (var vi = 0; vi < av.length; vi++) { activeSet[av[vi]] = true; }
+  }
+  var labels = [];
+  for (var vi = 0; vi < ALL_VENC.length; vi++) { if (activeSet[ALL_VENC[vi]]) { labels.push(ALL_VENC[vi]); } }
+  var datasets = [];
+  for (var di = 0; di < selDates.length; di++) {
+    var date = selDates[di];
+    var avSet = {};
+    var av2 = activeVenc(date);
+    for (var vi = 0; vi < av2.length; vi++) { avSet[av2[vi]] = true; }
+    var data = [];
+    for (var li = 0; li < labels.length; li++) { data.push(avSet[labels[li]] ? DB[date][labels[li]] : null); }
+    datasets.push({ label: fmt(date), data: data, borderColor: COLORS[di % COLORS.length], backgroundColor: 'transparent', borderWidth: 2, pointRadius: 4, pointHoverRadius: 6, tension: 0.3, borderDash: DASHES[di % DASHES.length], spanGaps: false });
+  }
+  var legHtml = '';
+  for (var di = 0; di < selDates.length; di++) {
+    legHtml += '<div class="li"><div class="ld" style="background:' + COLORS[di % COLORS.length] + '"></div><span>' + fmt(selDates[di]) + '</span></div>';
+  }
+  document.getElementById('curvaLeg').innerHTML = legHtml;
+  var xlabels = [];
+  for (var li = 0; li < labels.length; li++) { xlabels.push(fmt(VENC_ISO[labels[li]] || labels[li])); }
+  if (curvaInst) { curvaInst.destroy(); curvaInst = null; }
+  curvaInst = new Chart(document.getElementById('curvaChart'), {
+    type: 'line',
+    data: { labels: xlabels, datasets: datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { display: false }, tooltip: { callbacks: {
+        label: function(c) { return c.parsed.y != null ? c.dataset.label + ': ' + c.parsed.y.toFixed(2) + '% a.a.' : null; },
+        filter: function(i) { return i.parsed.y != null; }
       }}},
-      scales:{
-        x:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{maxRotation:35,font:{size:10},autoSkip:true,maxTicksLimit:10}},
-        y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{callback:function(v){return v.toFixed(2)+'%';},font:{size:11}},
-          title:{display:true,text:'% a.a.',font:{size:11},color:'#8a9bb0'}}
+      scales: {
+        x: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { maxRotation: 35, font: { size: 10 }, autoSkip: true, maxTicksLimit: 10 } },
+        y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { callback: function(v) { return v.toFixed(2) + '%'; }, font: { size: 11 } }, title: { display: true, text: '% a.a.', font: { size: 11 }, color: '#8a9bb0' } }
       }
     }
   });
 }
 
-function renderForward(){
-  var sel=document.getElementById('fwdDate');
-  var date=sel.value||(sel.options[0]&&sel.options[0].value);
-  if(date&&sel.value!==date) sel.value=date;
-  var info=document.getElementById('fwdInfo'),container=document.getElementById('mxContainer');
-  if(!date||!DB[date]){info.textContent='Carregue dados para ver a matriz.';container.innerHTML='<div class="nodata"><span class="nd-icon">⊞</span>Carregue dados para ver a matriz</div>';return;}
-  var venc=activeVenc(date),rates=venc.map(function(v){return DB[date][v];}),dus=venc.map(function(v){return getVencDU(v,date);});
-  info.textContent='Data: '+fmt(date)+' · '+venc.length+' vencimentos ativos · DU/252 · Clique numa célula para acompanhar a evolução';
-  if(venc.length<2){container.innerHTML='<div class="nodata"><span class="nd-icon">⊞</span>Menos de 2 vencimentos nesta data</div>';return;}
-  var allFwd=[],matrix=[];
-  for(var i=0;i<venc.length;i++){
-    matrix[i]=[];
-    for(var j=0;j<venc.length;j++){
-      if(i>=j){matrix[i][j]=null;continue;}
-      var f=calcFwdDU(rates[i],rates[j],dus[i],dus[j]);
-      matrix[i][j]=f;if(f!==null) allFwd.push(f);
+function renderForward() {
+  var sel = document.getElementById('fwdDate');
+  var date = sel.value || (sel.options[0] && sel.options[0].value);
+  if (date && sel.value !== date) { sel.value = date; }
+  var info = document.getElementById('fwdInfo');
+  var container = document.getElementById('mxContainer');
+  if (!date || !DB[date]) {
+    info.textContent = 'Carregue dados para ver a matriz.';
+    container.innerHTML = '<div class="nodata"><span class="nd-icon">&#8862;</span>Carregue dados para ver a matriz</div>';
+    return;
+  }
+  var venc = activeVenc(date);
+  var rates = [];
+  var dus = [];
+  for (var i = 0; i < venc.length; i++) { rates.push(DB[date][venc[i]]); dus.push(getVencDU(venc[i], date)); }
+  info.textContent = 'Data: ' + fmt(date) + ' \u00b7 ' + venc.length + ' vencimentos ativos \u00b7 DU/252 \u00b7 Clique numa c\u00e9lula para acompanhar a evolu\u00e7\u00e3o';
+  if (venc.length < 2) { container.innerHTML = '<div class="nodata"><span class="nd-icon">&#8862;</span>Menos de 2 vencimentos nesta data</div>'; return; }
+  var allFwd = [];
+  var matrix = [];
+  for (var i = 0; i < venc.length; i++) {
+    matrix[i] = [];
+    for (var j = 0; j < venc.length; j++) {
+      if (i >= j) { matrix[i][j] = null; continue; }
+      var f = calcFwdDU(rates[i], rates[j], dus[i], dus[j]);
+      matrix[i][j] = f;
+      if (f !== null) { allFwd.push(f); }
     }
   }
-  if(!allFwd.length){container.innerHTML='<div class="nodata">Nenhum forward calculado para esta data.</div>';return;}
-  var maxF=Math.max.apply(null,allFwd),minF=Math.min.apply(null,allFwd),rng=maxF-minF||1;
-  function cc(v){var n=(v-minF)/rng;return n>0.66?'ch':n>0.33?'cm':'cl';}
-  var html='<table class="mx"><thead><tr><th>↓ De / Até →</th>';
-  for(var j2=0;j2<venc.length;j2++) html+='<th>'+fmt(VENC_ISO[venc[j2]])+'<br><span style="font-weight:400;font-size:9px;color:#8a9bb0">'+dus[j2]+' DU</span></th>';
-  html+='</tr></thead><tbody>';
-  for(var i2=0;i2<venc.length;i2++){
-    html+='<tr><td class="rl">'+fmt(VENC_ISO[venc[i2]])+'<br><span style="font-weight:400;font-size:10px;color:#8a9bb0">'+rates[i2].toFixed(2)+'% · '+dus[i2]+' DU</span></td>';
-    for(var j3=0;j3<venc.length;j3++){
-      if(i2===j3){html+='<td class="cd">—</td>';}
-      else if(i2>j3){html+='<td class="cn">·</td>';}
-      else{
-        var v2=matrix[i2][j3];if(v2===null){html+='<td class="cn">—</td>';continue;}
-        var isTk=trackedFwds.some(function(t){return t.from===venc[i2]&&t.to===venc[j3];});
-        html+='<td class="'+cc(v2)+(isTk?' tracked':'')+'" data-from="'+venc[i2]+'" data-to="'+venc[j3]+'">'+v2.toFixed(2)+'%</td>';
+  if (!allFwd.length) { container.innerHTML = '<div class="nodata">Nenhum forward calculado para esta data.</div>'; return; }
+  var maxF = Math.max.apply(null, allFwd);
+  var minF = Math.min.apply(null, allFwd);
+  var rng = maxF - minF || 1;
+  function cc(v) { var n = (v - minF) / rng; return n > 0.66 ? 'ch' : n > 0.33 ? 'cm' : 'cl'; }
+  var html = '<table class="mx"><thead><tr><th>\u2193 De / At\u00e9 \u2192</th>';
+  for (var j = 0; j < venc.length; j++) {
+    html += '<th>' + fmt(VENC_ISO[venc[j]]) + '<br><span style="font-weight:400;font-size:9px;color:#8a9bb0">' + dus[j] + ' DU</span></th>';
+  }
+  html += '</tr></thead><tbody>';
+  for (var i = 0; i < venc.length; i++) {
+    html += '<tr><td class="rl">' + fmt(VENC_ISO[venc[i]]) + '<br><span style="font-weight:400;font-size:10px;color:#8a9bb0">' + rates[i].toFixed(2) + '% &middot; ' + dus[i] + ' DU</span></td>';
+    for (var j = 0; j < venc.length; j++) {
+      if (i === j) { html += '<td class="cd">&mdash;</td>'; }
+      else if (i > j) { html += '<td class="cn">&middot;</td>'; }
+      else {
+        var v2 = matrix[i][j];
+        if (v2 === null) { html += '<td class="cn">&mdash;</td>'; continue; }
+        var isTk = false;
+        for (var ti = 0; ti < trackedFwds.length; ti++) { if (trackedFwds[ti].from === venc[i] && trackedFwds[ti].to === venc[j]) { isTk = true; break; } }
+        html += '<td class="' + cc(v2) + (isTk ? ' tracked' : '') + '" data-from="' + venc[i] + '" data-to="' + venc[j] + '">' + v2.toFixed(2) + '%</td>';
       }
     }
-    html+='</tr>';
+    html += '</tr>';
   }
-  html+='</tbody></table>';
-  container.innerHTML=html;
-  container.querySelectorAll('td[data-from]').forEach(function(td){
-    td.addEventListener('click',function(){addTrackedFwd(this.getAttribute('data-from'),this.getAttribute('data-to'));});
-  });
+  html += '</tbody></table>';
+  container.innerHTML = html;
+  var cells = container.querySelectorAll('td[data-from]');
+  for (var ci = 0; ci < cells.length; ci++) {
+    cells[ci].addEventListener('click', function() { addTrackedFwd(this.getAttribute('data-from'), this.getAttribute('data-to')); });
+  }
 }
 
-function addTrackedFwd(from,to){
-  if(!from||!to||from===to) return;
-  if(trackedFwds.some(function(t){return t.from===from&&t.to===to;})) return;
-  trackedFwds.push({from:from,to:to,color:COLORS[trackedFwds.length%COLORS.length]});
-  updateFwdTags();renderForward();
-  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
-  document.querySelectorAll('.pane').forEach(function(p){p.classList.remove('active');});
+function addTrackedFwd(from, to) {
+  if (!from || !to || from === to) { return; }
+  for (var i = 0; i < trackedFwds.length; i++) { if (trackedFwds[i].from === from && trackedFwds[i].to === to) { return; } }
+  trackedFwds.push({ from: from, to: to, color: COLORS[trackedFwds.length % COLORS.length] });
+  updateFwdTags();
+  renderForward();
+  var btns = document.querySelectorAll('.tab-btn');
+  for (var i = 0; i < btns.length; i++) { btns[i].classList.remove('active'); }
+  var panes = document.querySelectorAll('.pane');
+  for (var i = 0; i < panes.length; i++) { panes[i].classList.remove('active'); }
   document.getElementById('tb-hist').classList.add('active');
   document.getElementById('pn-hist').classList.add('active');
-  populateHistSelects();renderHist();
+  populateHistSelects();
+  renderHist();
 }
-function removeTrackedFwd(idx){
-  trackedFwds.splice(idx,1);trackedFwds.forEach(function(t,i){t.color=COLORS[i%COLORS.length];});
-  updateFwdTags();renderForward();renderHist();
-}
-function updateFwdTags(){
-  var c=document.getElementById('fwdTags');
-  if(!trackedFwds.length){c.innerHTML='<span style="font-size:13px;color:#8a9bb0">Nenhum forward selecionado ainda.</span>';return;}
-  c.innerHTML=trackedFwds.map(function(t,i){
-    return '<div class="ftag" style="background:'+hexA(t.color,0.08)+';border-color:'+t.color+';color:'+t.color+'">'+
-      fmt(VENC_ISO[t.from])+' → '+fmt(VENC_ISO[t.to])+'<button data-i="'+i+'" style="color:'+t.color+'">×</button></div>';
-  }).join('');
-  c.querySelectorAll('button').forEach(function(btn){btn.addEventListener('click',function(){removeTrackedFwd(parseInt(this.getAttribute('data-i')));});});
-}
-function hexA(hex,a){var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return 'rgba('+r+','+g+','+b+','+a+')';}
-function addFwdFromSelects(){
-  var from=document.getElementById('histFrom').value,to=document.getElementById('histTo').value;
-  if(!from||!to||from===to){alert('Selecione dois vencimentos diferentes.');return;}
-  addTrackedFwd(from,to);
-}
-function populateHistSelects(){
-  ['histFrom','histTo'].forEach(function(id){
-    var sel=document.getElementById(id),cur=sel.value;
-    sel.innerHTML=ALL_VENC.map(function(v){return '<option value="'+v+'"'+(v===cur?' selected':'')+'>'+fmt(VENC_ISO[v]||v)+'</option>';}).join('');
-  });
-}
-function renderHist(){
+
+function removeTrackedFwd(idx) {
+  trackedFwds.splice(idx, 1);
+  for (var i = 0; i < trackedFwds.length; i++) { trackedFwds[i].color = COLORS[i % COLORS.length]; }
   updateFwdTags();
-  if(!Object.keys(DB).length||!trackedFwds.length){if(histInst){histInst.destroy();histInst=null;}return;}
-  var periodDays=parseInt(document.getElementById('histPeriod').value)||0;
-  var allDates=Object.keys(DB).sort(),dates=allDates;
-  if(periodDays){
-    var cutoff=new Date();cutoff.setDate(cutoff.getDate()-periodDays);
-    dates=allDates.filter(function(d){return d>=cutoff.toISOString().slice(0,10);});
+  renderForward();
+  renderHist();
+}
+
+function updateFwdTags() {
+  var c = document.getElementById('fwdTags');
+  if (!trackedFwds.length) { c.innerHTML = '<span style="font-size:13px;color:#8a9bb0">Nenhum forward selecionado ainda.</span>'; return; }
+  var html = '';
+  for (var i = 0; i < trackedFwds.length; i++) {
+    var t = trackedFwds[i];
+    html += '<div class="ftag" style="background:' + hexA(t.color, 0.08) + ';border-color:' + t.color + ';color:' + t.color + '">' + fmt(VENC_ISO[t.from]) + ' &rarr; ' + fmt(VENC_ISO[t.to]) + '<button data-i="' + i + '" style="color:' + t.color + '">&times;</button></div>';
   }
-  var datasets=trackedFwds.map(function(t){
-    return{label:fmt(VENC_ISO[t.from])+' → '+fmt(VENC_ISO[t.to]),
-      data:dates.map(function(date){var v=getFwdValue(date,t.from,t.to);return v!==null?parseFloat(v.toFixed(4)):null;}),
-      borderColor:t.color,backgroundColor:'transparent',borderWidth:1.5,pointRadius:0,pointHoverRadius:4,tension:0.2,spanGaps:false};
-  });
-  document.getElementById('histLeg').innerHTML=trackedFwds.map(function(t){
-    return '<div class="li"><div class="ld" style="background:'+t.color+'"></div><span>'+fmt(VENC_ISO[t.from])+' → '+fmt(VENC_ISO[t.to])+'</span></div>';
-  }).join('');
-  var step=Math.max(1,Math.ceil(dates.length/250));
-  var lbls=dates.filter(function(_,i){return i%step===0||i===dates.length-1;});
-  var dsR=datasets.map(function(ds){return Object.assign({},ds,{data:lbls.map(function(d){return ds.data[dates.indexOf(d)];});});});
-  if(histInst){histInst.destroy();histInst=null;}
-  histInst=new Chart(document.getElementById('histChart'),{
-    type:'line',data:{labels:lbls.map(fmt),datasets:dsR},
-    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
-      plugins:{legend:{display:false},tooltip:{callbacks:{
-        label:function(c){return c.parsed.y!=null?c.dataset.label+': '+c.parsed.y.toFixed(2)+'% a.a.':null;},
-        filter:function(i){return i.parsed.y!=null;}
+  c.innerHTML = html;
+  var btns = c.querySelectorAll('button');
+  for (var i = 0; i < btns.length; i++) {
+    btns[i].addEventListener('click', function() { removeTrackedFwd(parseInt(this.getAttribute('data-i'))); });
+  }
+}
+
+function hexA(hex, a) {
+  var r = parseInt(hex.slice(1,3), 16);
+  var g = parseInt(hex.slice(3,5), 16);
+  var b = parseInt(hex.slice(5,7), 16);
+  return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+}
+
+function addFwdFromSelects() {
+  var from = document.getElementById('histFrom').value;
+  var to = document.getElementById('histTo').value;
+  if (!from || !to || from === to) { alert('Selecione dois vencimentos diferentes.'); return; }
+  addTrackedFwd(from, to);
+}
+
+function populateHistSelects() {
+  var ids = ['histFrom', 'histTo'];
+  for (var ii = 0; ii < ids.length; ii++) {
+    var sel = document.getElementById(ids[ii]);
+    var cur = sel.value;
+    var html = '';
+    for (var vi = 0; vi < ALL_VENC.length; vi++) {
+      var v = ALL_VENC[vi];
+      html += '<option value="' + v + '"' + (v === cur ? ' selected' : '') + '>' + fmt(VENC_ISO[v] || v) + '</option>';
+    }
+    sel.innerHTML = html;
+  }
+}
+
+function renderHist() {
+  updateFwdTags();
+  if (!Object.keys(DB).length || !trackedFwds.length) { if (histInst) { histInst.destroy(); histInst = null; } return; }
+  var periodDays = parseInt(document.getElementById('histPeriod').value) || 0;
+  var allDates = Object.keys(DB).sort();
+  var dates = allDates;
+  if (periodDays) {
+    var cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - periodDays);
+    var cutStr = cutoff.toISOString().slice(0, 10);
+    dates = allDates.filter(function(d) { return d >= cutStr; });
+  }
+  var datasets = [];
+  for (var ti = 0; ti < trackedFwds.length; ti++) {
+    var t = trackedFwds[ti];
+    var data = [];
+    for (var di = 0; di < dates.length; di++) {
+      var v = getFwdValue(dates[di], t.from, t.to);
+      data.push(v !== null ? parseFloat(v.toFixed(4)) : null);
+    }
+    datasets.push({ label: fmt(VENC_ISO[t.from]) + ' \u2192 ' + fmt(VENC_ISO[t.to]), data: data, borderColor: t.color, backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0, pointHoverRadius: 4, tension: 0.2, spanGaps: false });
+  }
+  var legHtml = '';
+  for (var ti = 0; ti < trackedFwds.length; ti++) {
+    legHtml += '<div class="li"><div class="ld" style="background:' + trackedFwds[ti].color + '"></div><span>' + fmt(VENC_ISO[trackedFwds[ti].from]) + ' &rarr; ' + fmt(VENC_ISO[trackedFwds[ti].to]) + '</span></div>';
+  }
+  document.getElementById('histLeg').innerHTML = legHtml;
+  var step = Math.max(1, Math.ceil(dates.length / 250));
+  var lbls = [];
+  var dsData = [];
+  for (var ti = 0; ti < datasets.length; ti++) { dsData.push([]); }
+  for (var di = 0; di < dates.length; di++) {
+    if (di % step === 0 || di === dates.length - 1) {
+      lbls.push(fmt(dates[di]));
+      for (var ti = 0; ti < datasets.length; ti++) { dsData[ti].push(datasets[ti].data[di]); }
+    }
+  }
+  var finalDatasets = [];
+  for (var ti = 0; ti < datasets.length; ti++) {
+    finalDatasets.push(Object.assign({}, datasets[ti], { data: dsData[ti] }));
+  }
+  if (histInst) { histInst.destroy(); histInst = null; }
+  histInst = new Chart(document.getElementById('histChart'), {
+    type: 'line',
+    data: { labels: lbls, datasets: finalDatasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { display: false }, tooltip: { callbacks: {
+        label: function(c) { return c.parsed.y != null ? c.dataset.label + ': ' + c.parsed.y.toFixed(2) + '% a.a.' : null; },
+        filter: function(i) { return i.parsed.y != null; }
       }}},
-      scales:{
-        x:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{maxRotation:35,font:{size:10},maxTicksLimit:14}},
-        y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{callback:function(v){return v.toFixed(2)+'%';},font:{size:11}},
-          title:{display:true,text:'% a.a.',font:{size:11},color:'#8a9bb0'}}
+      scales: {
+        x: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { maxRotation: 35, font: { size: 10 }, maxTicksLimit: 14 } },
+        y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { callback: function(v) { return v.toFixed(2) + '%'; }, font: { size: 11 } }, title: { display: true, text: '% a.a.', font: { size: 11 }, color: '#8a9bb0' } }
       }
     }
   });
