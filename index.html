@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -37,8 +36,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .legend { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 10px; font-size: 12px; color: #5a6a7a; }
 .li { display: flex; align-items: center; gap: 6px; }
 .ld { width: 24px; height: 3px; border-radius: 2px; }
-.ld-dash { width: 24px; height: 0; border-top: 2px dashed; }
+.ld-dash { width: 24px; height: 0; border-top: 2px dashed; display: inline-block; }
 .chart-wrap { position: relative; width: 100%; height: 320px; }
+.chart-wrap-sm { position: relative; width: 100%; height: 160px; }
 .ctrl-row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
 .ctrl-row label { font-size: 13px; color: #5a6a7a; font-weight: 500; }
 select { font-size: 13px; padding: 7px 10px; border-radius: 7px; border: 1px solid #c8d4e0; background: #fff; color: #1a1a1a; outline: none; cursor: pointer; }
@@ -65,15 +65,13 @@ select:focus { border-color: #185FA5; }
 .ftag button { background: none; border: none; cursor: pointer; font-size: 14px; line-height: 1; padding: 0; opacity: 0.7; }
 .formula { background: #f4f7fb; border-radius: 8px; padding: 10px 16px; font-size: 12px; color: #4a5a6a; line-height: 1.8; border-left: 3px solid #185FA5; }
 .formula b { color: #0d1b2a; }
-/* Métricas checkboxes */
 .metrics-box { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; padding: 12px 0 4px 0; }
 .metric-chk { display: flex; align-items: center; gap: 7px; font-size: 13px; color: #4a5a6a; cursor: pointer; user-select: none; }
 .metric-chk input[type=checkbox] { width: 15px; height: 15px; cursor: pointer; accent-color: #185FA5; }
 .metric-sep { width: 1px; height: 20px; background: #e4e9f0; }
-.metric-label-sd { color: #D85A30; font-weight: 500; }
-.metric-label-mm21 { color: #1D9E75; font-weight: 500; }
-.metric-label-mm42 { color: #7F77DD; font-weight: 500; }
-.metric-label-mm64 { color: #BA7517; font-weight: 500; }
+.dev-lbl { font-size: 11px; font-weight: 600; color: #8a9bb0; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 4px; margin-top: 16px; }
+.dev-hint { font-size: 11px; color: #aab4be; margin-bottom: 8px; }
+.zero-line-label { font-size: 10px; color: #8a9bb0; }
 </style>
 </head>
 <body>
@@ -168,8 +166,10 @@ select:focus { border-color: #185FA5; }
         <button class="btnp" id="btnAddFwd">+ Adicionar</button>
       </div>
     </div>
+
     <div class="card">
-      <div class="ctrl-row" style="margin-bottom:12px">
+      <!-- Controles -->
+      <div class="ctrl-row" style="margin-bottom:14px">
         <label style="font-size:13px;color:#5a6a7a;font-weight:500">Per&iacute;odo:</label>
         <select id="histPeriod">
           <option value="0">Todo o hist&oacute;rico</option>
@@ -181,25 +181,37 @@ select:focus { border-color: #185FA5; }
       </div>
 
       <!-- Métricas -->
-      <div class="lbl" style="margin-top:4px">M&eacute;tricas adicionais</div>
+      <div class="lbl" style="margin-bottom:8px">M&eacute;tricas adicionais</div>
       <div class="metrics-box">
         <label class="metric-chk">
-          <input type="checkbox" id="chk-sd"> <span class="metric-label-sd">&plusmn;1 Desvio Padr&atilde;o</span>
+          <input type="checkbox" id="chk-sd">
+          <span style="color:#D85A30;font-weight:500">&plusmn;1&sigma; (janela 21 dias)</span>
         </label>
         <div class="metric-sep"></div>
         <label class="metric-chk">
-          <input type="checkbox" id="chk-mm21"> <span class="metric-label-mm21">M&eacute;dia M&oacute;vel 21 dias</span>
+          <input type="checkbox" id="chk-mm21">
+          <span style="color:#1D9E75;font-weight:500">MM 21 dias</span>
         </label>
         <label class="metric-chk">
-          <input type="checkbox" id="chk-mm42"> <span class="metric-label-mm42">M&eacute;dia M&oacute;vel 42 dias</span>
+          <input type="checkbox" id="chk-mm42">
+          <span style="color:#7F77DD;font-weight:500">MM 42 dias</span>
         </label>
         <label class="metric-chk">
-          <input type="checkbox" id="chk-mm64"> <span class="metric-label-mm64">M&eacute;dia M&oacute;vel 64 dias</span>
+          <input type="checkbox" id="chk-mm63">
+          <span style="color:#BA7517;font-weight:500">MM 63 dias</span>
         </label>
       </div>
 
-      <div class="legend" id="histLeg" style="margin-top:14px"></div>
-      <div class="chart-wrap" style="height:400px; margin-top:8px"><canvas id="histChart"></canvas></div>
+      <!-- Legenda + Gráfico principal -->
+      <div class="legend" id="histLeg" style="margin-top:16px"></div>
+      <div class="chart-wrap" style="height:360px; margin-top:6px"><canvas id="histChart"></canvas></div>
+
+      <!-- Gráfico de desvio (abaixo) -->
+      <div id="devSection" style="display:none">
+        <div class="dev-lbl" style="margin-top:20px">Desvio em rela&ccedil;&atilde;o &agrave; m&eacute;dia m&oacute;vel selecionada (bps)</div>
+        <div class="dev-hint" id="devHint"></div>
+        <div class="chart-wrap-sm"><canvas id="devChart"></canvas></div>
+      </div>
     </div>
   </div>
 </div>
@@ -303,13 +315,13 @@ function calcFwdDU(ri, rj, dui, duj) {
   return (Math.pow(Fj / Fi, 252 / (duj - dui)) - 1) * 100;
 }
 
-// Média móvel simples (ignora nulls)
-function movingAverage(data, window) {
+// Média móvel simples (janela de W pontos, ignora nulls)
+function movingAvg(data, W) {
   var result = [];
   for (var i = 0; i < data.length; i++) {
-    if (i < window - 1) { result.push(null); continue; }
+    if (i < W - 1) { result.push(null); continue; }
     var sum = 0, cnt = 0;
-    for (var j = i - window + 1; j <= i; j++) {
+    for (var j = i - W + 1; j <= i; j++) {
       if (data[j] !== null && data[j] !== undefined) { sum += data[j]; cnt++; }
     }
     result.push(cnt > 0 ? sum / cnt : null);
@@ -317,33 +329,49 @@ function movingAverage(data, window) {
   return result;
 }
 
-// Desvio padrão móvel (mesma janela que a série completa)
-function rollingStdDev(data, meanData) {
-  var n = data.length;
-  // Usa todos os dados válidos para calcular a média e std globais
-  var valid = [];
-  for (var i = 0; i < n; i++) { if (data[i] !== null && data[i] !== undefined) { valid.push(data[i]); } }
-  if (valid.length < 2) { return { upper: [], lower: [] }; }
-  var mean = 0;
-  for (var i = 0; i < valid.length; i++) { mean += valid[i]; }
-  mean /= valid.length;
-  var variance = 0;
-  for (var i = 0; i < valid.length; i++) { variance += (valid[i] - mean) * (valid[i] - mean); }
-  var std = Math.sqrt(variance / (valid.length - 1));
-  // Bandas: mean +/- 1 std, mas seguindo a MM (se disponível) ou a média global
+// Desvio padrão móvel (janela de W pontos) — retorna upper e lower
+function movingStdBands(data, W) {
   var upper = [], lower = [];
-  for (var i = 0; i < n; i++) {
-    var center = (meanData && meanData[i] !== null) ? meanData[i] : mean;
-    if (data[i] === null || data[i] === undefined) { upper.push(null); lower.push(null); }
-    else { upper.push(parseFloat((center + std).toFixed(4))); lower.push(parseFloat((center - std).toFixed(4))); }
+  for (var i = 0; i < data.length; i++) {
+    if (i < W - 1 || data[i] === null || data[i] === undefined) {
+      upper.push(null); lower.push(null); continue;
+    }
+    var vals = [];
+    for (var j = i - W + 1; j <= i; j++) {
+      if (data[j] !== null && data[j] !== undefined) { vals.push(data[j]); }
+    }
+    if (vals.length < 2) { upper.push(null); lower.push(null); continue; }
+    var mean = 0;
+    for (var k = 0; k < vals.length; k++) { mean += vals[k]; }
+    mean /= vals.length;
+    var variance = 0;
+    for (var k = 0; k < vals.length; k++) { variance += (vals[k] - mean) * (vals[k] - mean); }
+    var std = Math.sqrt(variance / (vals.length - 1));
+    // Banda centrada na MM21 do ponto atual
+    upper.push(parseFloat((mean + std).toFixed(4)));
+    lower.push(parseFloat((mean - std).toFixed(4)));
   }
-  return { upper: upper, lower: lower, std: std };
+  return { upper: upper, lower: lower };
 }
 
-var DB = {}, ALL_VENC = [], VENC_ISO = {}, selDates = [], trackedFwds = [], curvaInst = null, histInst = null;
+// Desvio em bps: série - MM (multiplicado por 100 para bps)
+function calcDeviation(data, mm) {
+  var result = [];
+  for (var i = 0; i < data.length; i++) {
+    if (data[i] === null || data[i] === undefined || mm[i] === null || mm[i] === undefined) {
+      result.push(null);
+    } else {
+      result.push(parseFloat(((data[i] - mm[i]) * 100).toFixed(2)));
+    }
+  }
+  return result;
+}
+
+var DB = {}, ALL_VENC = [], VENC_ISO = {}, selDates = [], trackedFwds = [];
+var curvaInst = null, histInst = null, devInst = null;
 var COLORS = ['#185FA5','#D85A30','#1D9E75','#7F77DD','#BA7517','#993556','#639922','#E24B4A'];
 var DASHES = [[], [6,3], [2,2], [8,2,2,2], [4,4]];
-var COLOR_SD = '#D85A30', COLOR_MM21 = '#1D9E75', COLOR_MM42 = '#7F77DD', COLOR_MM64 = '#BA7517';
+var C_SD = '#D85A30', C_MM21 = '#1D9E75', C_MM42 = '#7F77DD', C_MM63 = '#BA7517';
 
 function setupTabs() {
   var names = ['dados', 'curva', 'fwd', 'hist'];
@@ -357,8 +385,8 @@ function setupTabs() {
         document.getElementById('tb-' + name).classList.add('active');
         document.getElementById('pn-' + name).classList.add('active');
         if (name === 'curva') { renderCurva(); }
-        if (name === 'fwd')   { renderForward(); }
-        if (name === 'hist')  { populateHistSelects(); renderHist(); }
+        if (name === 'fwd') { renderForward(); }
+        if (name === 'hist') { populateHistSelects(); renderHist(); }
       });
     }(names[ni]));
   }
@@ -377,13 +405,12 @@ document.getElementById('histPeriod').addEventListener('change', renderHist);
 document.getElementById('chk-sd').addEventListener('change', renderHist);
 document.getElementById('chk-mm21').addEventListener('change', renderHist);
 document.getElementById('chk-mm42').addEventListener('change', renderHist);
-document.getElementById('chk-mm64').addEventListener('change', renderHist);
+document.getElementById('chk-mm63').addEventListener('change', renderHist);
 
 function excelToISO(raw) {
   if (raw === null || raw === undefined || raw === '') { return null; }
   if (typeof raw === 'number' && raw > 1000 && raw < 80000) {
-    var ms = Math.round((raw - 25569) * 86400 * 1000);
-    var d = new Date(ms);
+    var ms = Math.round((raw - 25569) * 86400 * 1000), d = new Date(ms);
     var y = d.getUTCFullYear(), m = d.getUTCMonth() + 1, dd = d.getUTCDate();
     return y + '-' + (m < 10 ? '0' : '') + m + '-' + (dd < 10 ? '0' : '') + dd;
   }
@@ -415,7 +442,6 @@ function handleFile(file) {
   };
   reader.readAsBinaryString(file);
 }
-
 function parseData(rows) {
   if (rows.length < 2) { alert('Planilha vazia'); return; }
   VENC_ISO = {};
@@ -434,8 +460,7 @@ function parseData(rows) {
   for (var r = 1; r < rows.length; r++) {
     var row = rows[r];
     if (!row || row[0] === null || row[0] === undefined) { continue; }
-    var dateISO = excelToISO(row[0]);
-    if (!dateISO) { continue; }
+    var dateISO = excelToISO(row[0]); if (!dateISO) { continue; }
     DB[dateISO] = {};
     for (var vi2 = 0; vi2 < vencRaw.length; vi2++) {
       var k = String(vencRaw[vi2]), val = row[vi2 + 1];
@@ -444,7 +469,6 @@ function parseData(rows) {
   }
   finishLoad();
 }
-
 function getVencDU(vencKey, refISO) {
   var viso = VENC_ISO[vencKey]; if (!viso) { return null; }
   var du = countDU(refISO, viso); return (du !== null && du > 0) ? du : null;
@@ -463,7 +487,6 @@ function getFwdValue(date, from, to) {
   var dui = getVencDU(from, date), duj = getVencDU(to, date);
   return calcFwdDU(DB[date][from], DB[date][to], dui, duj);
 }
-
 function finishLoad() {
   var dates = Object.keys(DB).sort();
   if (!dates.length) { alert('Nenhuma data valida encontrada.'); return; }
@@ -477,19 +500,14 @@ function finishLoad() {
   selDates = [dates[dates.length - 1]];
   if (dates.length > 60) { selDates.push(dates[dates.length - 61]); }
   trackedFwds = [];
-  var sorted = dates.slice().reverse();
-  var opts = '';
+  var sorted = dates.slice().reverse(), opts = '';
   for (var i = 0; i < sorted.length; i++) { opts += '<option value="' + sorted[i] + '">' + fmt(sorted[i]) + '</option>'; }
   document.getElementById('dateSelect').innerHTML = opts;
   document.getElementById('fwdDate').innerHTML = opts;
   populateHistSelects(); updateTags(); renderForward();
 }
 
-function addDate() {
-  var v = document.getElementById('dateSelect').value;
-  if (!v || !DB[v] || selDates.indexOf(v) >= 0) { return; }
-  selDates.push(v); updateTags(); renderCurva();
-}
+function addDate() { var v = document.getElementById('dateSelect').value; if (!v || !DB[v] || selDates.indexOf(v) >= 0) { return; } selDates.push(v); updateTags(); renderCurva(); }
 function removeDate(d) { selDates = selDates.filter(function(x) { return x !== d; }); updateTags(); renderCurva(); }
 function updateTags() {
   var c = document.getElementById('dtags'), html = '';
@@ -498,14 +516,10 @@ function updateTags() {
   var btns = c.querySelectorAll('button');
   for (var i = 0; i < btns.length; i++) { btns[i].addEventListener('click', function() { removeDate(this.getAttribute('data-d')); }); }
 }
-
 function renderCurva() {
   if (!Object.keys(DB).length || !selDates.length) { return; }
   var activeSet = {};
-  for (var di = 0; di < selDates.length; di++) {
-    var av = activeVenc(selDates[di]);
-    for (var vi = 0; vi < av.length; vi++) { activeSet[av[vi]] = true; }
-  }
+  for (var di = 0; di < selDates.length; di++) { var av = activeVenc(selDates[di]); for (var vi = 0; vi < av.length; vi++) { activeSet[av[vi]] = true; } }
   var labels = [];
   for (var vi = 0; vi < ALL_VENC.length; vi++) { if (activeSet[ALL_VENC[vi]]) { labels.push(ALL_VENC[vi]); } }
   var datasets = [];
@@ -525,18 +539,11 @@ function renderCurva() {
   curvaInst = new Chart(document.getElementById('curvaChart'), {
     type: 'line', data: { labels: xlabels, datasets: datasets },
     options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-      plugins: { legend: { display: false }, tooltip: { callbacks: {
-        label: function(c) { return c.parsed.y != null ? c.dataset.label + ': ' + c.parsed.y.toFixed(2) + '% a.a.' : null; },
-        filter: function(i) { return i.parsed.y != null; }
-      }}},
-      scales: {
-        x: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { maxRotation: 35, font: { size: 10 }, autoSkip: true, maxTicksLimit: 10 } },
-        y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { callback: function(v) { return v.toFixed(2) + '%'; }, font: { size: 11 } }, title: { display: true, text: '% a.a.', font: { size: 11 }, color: '#8a9bb0' } }
-      }
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(c) { return c.parsed.y != null ? c.dataset.label + ': ' + c.parsed.y.toFixed(2) + '% a.a.' : null; }, filter: function(i) { return i.parsed.y != null; } } } },
+      scales: { x: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { maxRotation: 35, font: { size: 10 }, autoSkip: true, maxTicksLimit: 10 } }, y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { callback: function(v) { return v.toFixed(2) + '%'; }, font: { size: 11 } }, title: { display: true, text: '% a.a.', font: { size: 11 }, color: '#8a9bb0' } } }
     }
   });
 }
-
 function renderForward() {
   var sel = document.getElementById('fwdDate');
   var date = sel.value || (sel.options[0] && sel.options[0].value);
@@ -545,7 +552,7 @@ function renderForward() {
   if (!date || !DB[date]) { info.textContent = 'Carregue dados para ver a matriz.'; container.innerHTML = '<div class="nodata"><span class="nd-icon">&#8862;</span>Carregue dados para ver a matriz</div>'; return; }
   var venc = activeVenc(date), rates = [], dus = [];
   for (var i = 0; i < venc.length; i++) { rates.push(DB[date][venc[i]]); dus.push(getVencDU(venc[i], date)); }
-  info.textContent = 'Data: ' + fmt(date) + ' \u00b7 ' + venc.length + ' vencimentos ativos \u00b7 DU/252 \u00b7 Clique numa c\u00e9lula para acompanhar a evolu\u00e7\u00e3o';
+  info.textContent = 'Data: ' + fmt(date) + ' \u00b7 ' + venc.length + ' vencimentos ativos \u00b7 DU/252 \u00b7 Clique numa c\u00e9lula para acompanhar';
   if (venc.length < 2) { container.innerHTML = '<div class="nodata"><span class="nd-icon">&#8862;</span>Menos de 2 vencimentos nesta data</div>'; return; }
   var allFwd = [], matrix = [];
   for (var i = 0; i < venc.length; i++) {
@@ -556,7 +563,7 @@ function renderForward() {
       matrix[i][j] = f; if (f !== null) { allFwd.push(f); }
     }
   }
-  if (!allFwd.length) { container.innerHTML = '<div class="nodata">Nenhum forward calculado para esta data.</div>'; return; }
+  if (!allFwd.length) { container.innerHTML = '<div class="nodata">Nenhum forward calculado.</div>'; return; }
   var maxF = Math.max.apply(null, allFwd), minF = Math.min.apply(null, allFwd), rng = maxF - minF || 1;
   function cc(v) { var n = (v - minF) / rng; return n > 0.66 ? 'ch' : n > 0.33 ? 'cm' : 'cl'; }
   var html = '<table class="mx"><thead><tr><th>\u2193 De / At\u00e9 \u2192</th>';
@@ -581,7 +588,6 @@ function renderForward() {
   var cells = container.querySelectorAll('td[data-from]');
   for (var ci = 0; ci < cells.length; ci++) { cells[ci].addEventListener('click', function() { addTrackedFwd(this.getAttribute('data-from'), this.getAttribute('data-to')); }); }
 }
-
 function addTrackedFwd(from, to) {
   if (!from || !to || from === to) { return; }
   for (var i = 0; i < trackedFwds.length; i++) { if (trackedFwds[i].from === from && trackedFwds[i].to === to) { return; } }
@@ -631,12 +637,24 @@ function populateHistSelects() {
 
 function renderHist() {
   updateFwdTags();
-  if (!Object.keys(DB).length || !trackedFwds.length) { if (histInst) { histInst.destroy(); histInst = null; } return; }
+  if (!Object.keys(DB).length || !trackedFwds.length) {
+    if (histInst) { histInst.destroy(); histInst = null; }
+    if (devInst)  { devInst.destroy();  devInst  = null; }
+    return;
+  }
 
-  var showSD  = document.getElementById('chk-sd').checked;
+  var showSD   = document.getElementById('chk-sd').checked;
   var showMM21 = document.getElementById('chk-mm21').checked;
   var showMM42 = document.getElementById('chk-mm42').checked;
-  var showMM64 = document.getElementById('chk-mm64').checked;
+  var showMM63 = document.getElementById('chk-mm63').checked;
+
+  // Qual MM usar como referência para o gráfico de desvio (prioridade: menor janela ativa)
+  var refMMWindow = 0;
+  var refMMLabel = '';
+  var refMMColor = '';
+  if (showMM21) { refMMWindow = 21; refMMLabel = 'MM 21 dias'; refMMColor = C_MM21; }
+  else if (showMM42) { refMMWindow = 42; refMMLabel = 'MM 42 dias'; refMMColor = C_MM42; }
+  else if (showMM63) { refMMWindow = 63; refMMLabel = 'MM 63 dias'; refMMColor = C_MM63; }
 
   var periodDays = parseInt(document.getElementById('histPeriod').value) || 0;
   var allDates = Object.keys(DB).sort();
@@ -647,82 +665,124 @@ function renderHist() {
     dates = allDates.filter(function(d) { return d >= cutStr; });
   }
 
+  // Subsampling
+  var step = Math.max(1, Math.ceil(dates.length / 300));
+  var lbls = [];
+  for (var di = 0; di < dates.length; di++) { if (di % step === 0 || di === dates.length - 1) { lbls.push(fmt(dates[di])); } }
+
   var datasets = [];
+  var devDatasets = [];
   var legItems = [];
+  var showDevChart = refMMWindow > 0;
 
   for (var ti = 0; ti < trackedFwds.length; ti++) {
     var t = trackedFwds[ti];
     var lbl = fmt(VENC_ISO[t.from]) + ' \u2192 ' + fmt(VENC_ISO[t.to]);
 
-    // Série principal
+    // Série principal (todos os pontos)
     var mainData = [];
     for (var di = 0; di < dates.length; di++) {
       var v = getFwdValue(dates[di], t.from, t.to);
       mainData.push(v !== null ? parseFloat(v.toFixed(4)) : null);
     }
-    datasets.push({ label: lbl, data: mainData, borderColor: t.color, backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, pointHoverRadius: 4, tension: 0.2, spanGaps: false, order: 1 });
+
+    // MMs (calculadas sobre todos os pontos, depois subsampled)
+    var mm21Data = showMM21 ? movingAvg(mainData, 21) : null;
+    var mm42Data = showMM42 ? movingAvg(mainData, 42) : null;
+    var mm63Data = showMM63 ? movingAvg(mainData, 63) : null;
+
+    // Desvio padrão móvel (janela 21) centrado na MM21
+    var sdBands = null;
+    if (showSD) { sdBands = movingStdBands(mainData, 21); }
+
+    // Referência para gráfico de desvio
+    var refMM = null;
+    if (refMMWindow === 21) { refMM = mm21Data; }
+    else if (refMMWindow === 42) { refMM = mm42Data || movingAvg(mainData, 42); }
+    else if (refMMWindow === 63) { refMM = mm63Data || movingAvg(mainData, 63); }
+
+    // Subsample helper
+    function sub(arr) {
+      if (!arr) { return null; }
+      var r = [];
+      for (var di2 = 0; di2 < arr.length; di2++) { if (di2 % step === 0 || di2 === arr.length - 1) { r.push(arr[di2]); } }
+      return r;
+    }
+
+    var mainSub = sub(mainData);
+    datasets.push({ label: lbl, data: mainSub, borderColor: t.color, backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, pointHoverRadius: 4, tension: 0.2, spanGaps: false, order: 1 });
     legItems.push('<div class="li"><div class="ld" style="background:' + t.color + '"></div><span>' + lbl + '</span></div>');
 
-    // MM21
     if (showMM21) {
-      var mm21 = movingAverage(mainData, 21);
-      datasets.push({ label: 'MM21 ' + lbl, data: mm21, borderColor: COLOR_MM21, backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [6,3], pointRadius: 0, pointHoverRadius: 0, tension: 0.2, spanGaps: false, order: 2 });
-      if (ti === 0) { legItems.push('<div class="li"><div class="ld-dash" style="border-color:' + COLOR_MM21 + '"></div><span>MM 21 dias</span></div>'); }
+      datasets.push({ label: 'MM21 ' + lbl, data: sub(mm21Data), borderColor: C_MM21, backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [6,3], pointRadius: 0, pointHoverRadius: 0, tension: 0.2, spanGaps: false, order: 2 });
+      if (ti === 0) { legItems.push('<div class="li"><div class="ld-dash" style="border-color:' + C_MM21 + '"></div><span>MM 21 dias</span></div>'); }
     }
-    // MM42
     if (showMM42) {
-      var mm42 = movingAverage(mainData, 42);
-      datasets.push({ label: 'MM42 ' + lbl, data: mm42, borderColor: COLOR_MM42, backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [6,3], pointRadius: 0, pointHoverRadius: 0, tension: 0.2, spanGaps: false, order: 2 });
-      if (ti === 0) { legItems.push('<div class="li"><div class="ld-dash" style="border-color:' + COLOR_MM42 + '"></div><span>MM 42 dias</span></div>'); }
+      datasets.push({ label: 'MM42 ' + lbl, data: sub(mm42Data), borderColor: C_MM42, backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [6,3], pointRadius: 0, pointHoverRadius: 0, tension: 0.2, spanGaps: false, order: 2 });
+      if (ti === 0) { legItems.push('<div class="li"><div class="ld-dash" style="border-color:' + C_MM42 + '"></div><span>MM 42 dias</span></div>'); }
     }
-    // MM64
-    if (showMM64) {
-      var mm64 = movingAverage(mainData, 64);
-      datasets.push({ label: 'MM64 ' + lbl, data: mm64, borderColor: COLOR_MM64, backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [6,3], pointRadius: 0, pointHoverRadius: 0, tension: 0.2, spanGaps: false, order: 2 });
-      if (ti === 0) { legItems.push('<div class="li"><div class="ld-dash" style="border-color:' + COLOR_MM64 + '"></div><span>MM 64 dias</span></div>'); }
+    if (showMM63) {
+      datasets.push({ label: 'MM63 ' + lbl, data: sub(mm63Data), borderColor: C_MM63, backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [6,3], pointRadius: 0, pointHoverRadius: 0, tension: 0.2, spanGaps: false, order: 2 });
+      if (ti === 0) { legItems.push('<div class="li"><div class="ld-dash" style="border-color:' + C_MM63 + '"></div><span>MM 63 dias</span></div>'); }
     }
-    // Desvio padrão
-    if (showSD) {
-      var refMean = showMM21 ? movingAverage(mainData, 21) : null;
-      var bands = rollingStdDev(mainData, refMean);
-      var sdColor = hexA(COLOR_SD, 0.15);
-      datasets.push({ label: '+1\u03c3 ' + lbl, data: bands.upper, borderColor: COLOR_SD, backgroundColor: 'transparent', borderWidth: 1, borderDash: [3,3], pointRadius: 0, pointHoverRadius: 0, tension: 0.2, spanGaps: false, order: 3 });
-      datasets.push({ label: '-1\u03c3 ' + lbl, data: bands.lower, borderColor: COLOR_SD, backgroundColor: sdColor, borderWidth: 1, borderDash: [3,3], pointRadius: 0, pointHoverRadius: 0, tension: 0.2, spanGaps: false, fill: '-1', order: 3 });
-      if (ti === 0) { legItems.push('<div class="li"><div class="ld-dash" style="border-color:' + COLOR_SD + '"></div><span>&plusmn;1\u03c3</span></div>'); }
+    if (showSD && sdBands) {
+      datasets.push({ label: '+1\u03c3 ' + lbl, data: sub(sdBands.upper), borderColor: C_SD, backgroundColor: 'transparent', borderWidth: 1, borderDash: [3,3], pointRadius: 0, pointHoverRadius: 0, tension: 0.2, spanGaps: false, order: 3 });
+      datasets.push({ label: '-1\u03c3 ' + lbl, data: sub(sdBands.lower), borderColor: C_SD, backgroundColor: hexA(C_SD, 0.08), borderWidth: 1, borderDash: [3,3], pointRadius: 0, pointHoverRadius: 0, tension: 0.2, spanGaps: false, fill: '-1', order: 3 });
+      if (ti === 0) { legItems.push('<div class="li"><div class="ld-dash" style="border-color:' + C_SD + '"></div><span>&plusmn;1&sigma; (21d)</span></div>'); }
+    }
+
+    // Desvio em bps
+    if (showDevChart && refMM) {
+      var devData = calcDeviation(mainData, refMM);
+      var devSub = sub(devData);
+      // Coloração positivo/negativo via ponto a ponto (usa backgroundColor array)
+      var bgColors = [];
+      for (var k = 0; k < devSub.length; k++) {
+        bgColors.push(devSub[k] !== null && devSub[k] >= 0 ? hexA(t.color, 0.7) : hexA('#D85A30', 0.7));
+      }
+      devDatasets.push({ label: lbl, data: devSub, borderColor: 'transparent', backgroundColor: bgColors, borderWidth: 0, pointRadius: 0, type: 'bar', barPercentage: 1.0, categoryPercentage: 1.0, order: 1 });
     }
   }
 
   document.getElementById('histLeg').innerHTML = legItems.join('');
 
-  // Subsampling para performance
-  var step = Math.max(1, Math.ceil(dates.length / 300));
-  var lbls = [];
-  var finalDatasets = [];
-  for (var di2 = 0; di2 < datasets.length; di2++) { finalDatasets.push(Object.assign({}, datasets[di2], { data: [] })); }
-  for (var di = 0; di < dates.length; di++) {
-    if (di % step === 0 || di === dates.length - 1) {
-      lbls.push(fmt(dates[di]));
-      for (var di2 = 0; di2 < datasets.length; di2++) { finalDatasets[di2].data.push(datasets[di2].data[di]); }
-    }
-  }
-
+  // Gráfico principal
   if (histInst) { histInst.destroy(); histInst = null; }
   histInst = new Chart(document.getElementById('histChart'), {
-    type: 'line',
-    data: { labels: lbls, datasets: finalDatasets },
+    type: 'line', data: { labels: lbls, datasets: datasets },
     options: {
       responsive: true, maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
-      plugins: { legend: { display: false }, tooltip: { callbacks: {
-        label: function(c) { return c.parsed.y != null ? c.dataset.label + ': ' + c.parsed.y.toFixed(2) + '% a.a.' : null; },
-        filter: function(i) { return i.parsed.y != null; }
-      }}},
-      scales: {
-        x: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { maxRotation: 35, font: { size: 10 }, maxTicksLimit: 14 } },
-        y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { callback: function(v) { return v.toFixed(2) + '%'; }, font: { size: 11 } }, title: { display: true, text: '% a.a.', font: { size: 11 }, color: '#8a9bb0' } }
-      }
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(c) { return c.parsed.y != null ? c.dataset.label + ': ' + c.parsed.y.toFixed(2) + '% a.a.' : null; }, filter: function(i) { return i.parsed.y != null; } } } },
+      scales: { x: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { maxRotation: 35, font: { size: 10 }, maxTicksLimit: 14 } }, y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { callback: function(v) { return v.toFixed(2) + '%'; }, font: { size: 11 } }, title: { display: true, text: '% a.a.', font: { size: 11 }, color: '#8a9bb0' } } }
     }
   });
+
+  // Gráfico de desvio
+  var devSection = document.getElementById('devSection');
+  if (showDevChart && devDatasets.length > 0) {
+    devSection.style.display = 'block';
+    document.getElementById('devHint').textContent = 'Forward \u2212 ' + refMMLabel + ' (bps). Positivo = forward acima da m\u00e9dia, negativo = abaixo.';
+    if (devInst) { devInst.destroy(); devInst = null; }
+    devInst = new Chart(document.getElementById('devChart'), {
+      type: 'bar', data: { labels: lbls, datasets: devDatasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(c) { return c.parsed.y != null ? c.dataset.label + ': ' + c.parsed.y.toFixed(1) + ' bps' : null; }, filter: function(i) { return i.parsed.y != null; } } } },
+        scales: {
+          x: { grid: { display: false }, ticks: { maxRotation: 35, font: { size: 9 }, maxTicksLimit: 14 } },
+          y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { callback: function(v) { return v + ' bps'; }, font: { size: 10 } },
+            title: { display: true, text: 'bps', font: { size: 10 }, color: '#8a9bb0' },
+            afterBuildTicks: function(axis) { axis.ticks.push({ value: 0 }); }
+          }
+        }
+      }
+    });
+  } else {
+    devSection.style.display = 'none';
+    if (devInst) { devInst.destroy(); devInst = null; }
+  }
 }
 </script>
 </body>
