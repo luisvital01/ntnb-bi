@@ -86,7 +86,7 @@ select:focus { border-color: #185FA5; }
   </div>
   <div class="topbar-right">
     <span class="refresh-status" id="refreshStatus"></span>
-    <button class="btn-refresh" id="btnRefresh" onclick="loadFromGSheets()">&#8635; Atualizar dados</button>
+    <button class="btn-refresh" id="btnRefresh" onclick="loadData()">&#8635; Atualizar dados</button>
   </div>
 </div>
 
@@ -101,17 +101,10 @@ select:focus { border-color: #185FA5; }
   <!-- DADOS -->
   <div class="pane active" id="pn-dados">
     <div class="card">
-      <div class="lbl">Fonte de dados &mdash; Google Sheets</div>
-      <div class="gs-input-row">
-        <input class="gs-input" type="text" id="gsUrl"
-          placeholder="ID da planilha ou URL completa do Google Sheets"
-          value="1ryhKka60mENM7OMk8E4efrBVwPu-egw5G4fJVYg6I_k">
-        <button class="btnp" onclick="loadFromGSheets()">Carregar</button>
-      </div>
+      <div class="lbl">Fonte de dados &mdash; GitHub</div>
       <div class="gs-hint">
-        A planilha precisa estar compartilhada como "qualquer pessoa com o link pode ver".<br>
-        O ID &eacute; a string longa na URL entre <code>/d/</code> e <code>/edit</code>.
-        Os dados s&atilde;o carregados automaticamente ao abrir a p&aacute;gina.
+        Dados carregados automaticamente de <code>dados/ntnb_export.csv</code> no reposit&oacute;rio.<br>
+        Clique em <b>Atualizar dados</b> (barra superior) para recarregar ap&oacute;s novo commit.
       </div>
     </div>
     <div class="card" id="statusCard" style="display:none">
@@ -441,30 +434,19 @@ document.getElementById('histPeriod').addEventListener('change', renderHist);
 // ══════════════════════════════════════════════════════
 // CARGA DO GOOGLE SHEETS
 // ══════════════════════════════════════════════════════
-function extractSheetId(input) {
-  var s = input.trim();
-  var m = s.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
-  if (m) { return m[1]; }
-  if (/^[a-zA-Z0-9_-]{20,}$/.test(s)) { return s; }
-  return null;
-}
+// URL raw do CSV no GitHub — relativa ao domínio do GitHub Pages
+var CSV_URL = 'dados/ntnb_export.csv';
 
-function loadFromGSheets() {
-  var input = document.getElementById('gsUrl').value;
-  var sheetId = extractSheetId(input);
-  if (!sheetId) {
-    document.getElementById('statusCard').style.display = 'block';
-    document.getElementById('statusBar').innerHTML = '<span class="sbadge sbadge-err">&#10005; ID inválido</span> Verifique a URL ou o ID da planilha.';
-    return;
-  }
+function loadData() {
   var btn = document.getElementById('btnRefresh');
   btn.classList.add('loading'); btn.textContent = '⏳ Carregando...';
   document.getElementById('refreshStatus').textContent = '';
 
-  var url = 'https://docs.google.com/spreadsheets/d/' + sheetId + '/export?format=csv&gid=0';
+  // Cache-busting para garantir dados frescos após novo commit
+  var url = CSV_URL + '?t=' + Date.now();
   fetch(url)
     .then(function(r) {
-      if (!r.ok) { throw new Error('HTTP ' + r.status + '. Verifique se a planilha está compartilhada publicamente.'); }
+      if (!r.ok) { throw new Error('HTTP ' + r.status); }
       return r.text();
     })
     .then(function(csv) {
@@ -919,10 +901,7 @@ function renderHist() {
 }
 
 // Carrega automaticamente ao abrir
-window.addEventListener('load', function() {
-  var gsUrl = document.getElementById('gsUrl').value.trim();
-  if (gsUrl) { loadFromGSheets(); }
-});
+window.addEventListener('load', function() { loadData(); });
 </script>
 </body>
 </html>
