@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BI de NTN-B</title>
+<title>BI de Títulos Públicos</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8f9fa; color: #1a1a1a; min-height: 100vh; }
-.topbar { background: #0d1b2a; padding: 14px 32px; display: flex; align-items: center; gap: 16px; }
+.topbar { background: #0d1b2a; padding: 14px 32px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .topbar-info h1 { font-size: 18px; font-weight: 600; color: #fff; }
 .topbar-info p { font-size: 12px; color: #8a9bb0; margin-top: 2px; }
 .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
@@ -17,11 +17,22 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .btn-refresh.loading { opacity: 0.6; pointer-events: none; }
 .refresh-status { font-size: 11px; color: #8a9bb0; }
 .container { max-width: 1280px; margin: 0 auto; padding: 24px; }
-.tabs { display: flex; gap: 2px; margin-bottom: 20px; background: #e8edf2; border-radius: 10px; padding: 3px; width: fit-content; }
+
+/* Abas principais (título) */
+.main-tabs { display: flex; gap: 6px; margin-bottom: 18px; border-bottom: 2px solid #e4e9f0; }
+.main-tab-btn { background: none; border: none; padding: 10px 22px; font-size: 15px; font-weight: 600; color: #8a9bb0; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.15s; }
+.main-tab-btn:hover { color: #185FA5; }
+.main-tab-btn.active { color: #0d1b2a; border-bottom-color: #185FA5; }
+.main-pane { display: none; }
+.main-pane.active { display: block; }
+
+/* Sub-abas */
+.tabs { display: flex; gap: 2px; margin-bottom: 20px; background: #e8edf2; border-radius: 10px; padding: 3px; width: fit-content; max-width: 100%; overflow-x: auto; }
 .tab-btn { background: none; border: none; padding: 8px 18px; font-size: 13px; font-weight: 500; color: #5a6a7a; cursor: pointer; border-radius: 8px; transition: all 0.15s; white-space: nowrap; }
 .tab-btn.active { background: #fff; color: #0d1b2a; box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
 .pane { display: none; }
 .pane.active { display: block; }
+
 .card { background: #fff; border: 1px solid #e4e9f0; border-radius: 12px; padding: 20px 24px; margin-bottom: 16px; }
 .lbl { font-size: 11px; font-weight: 600; color: #8a9bb0; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 12px; }
 .mrow { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap: 10px; margin-top: 12px; }
@@ -71,251 +82,88 @@ select:focus { border-color: #185FA5; }
 .metric-sep { width: 1px; height: 20px; background: #e4e9f0; }
 .dev-lbl { font-size: 11px; font-weight: 600; color: #8a9bb0; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 4px; margin-top: 16px; }
 .dev-hint { font-size: 11px; color: #aab4be; margin-bottom: 8px; }
-.gs-input-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-.gs-input { flex: 1; min-width: 280px; font-size: 13px; padding: 8px 12px; border-radius: 7px; border: 1px solid #c8d4e0; background: #fff; color: #1a1a1a; outline: none; }
-.gs-input:focus { border-color: #185FA5; }
 .gs-hint { font-size: 11px; color: #8a9bb0; line-height: 1.6; }
+
+/* LTN: extras */
+.grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
+.grid3 .card { margin-bottom: 0; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 16px; }
+.grid2 .card { margin-bottom: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 12px; font-weight: 500; padding: 5px 11px; border-radius: 6px; border: 1.5px solid #c8d4e0; background: #fff; color: #5a6a7a; cursor: pointer; user-select: none; }
+.chip.on { color: #fff; }
+.tbl-wrap { overflow-x: auto; }
+.tbl { border-collapse: collapse; width: 100%; font-size: 12px; }
+.tbl th { background: #f4f7fb; padding: 8px 10px; font-weight: 600; color: #5a6a7a; border-bottom: 1px solid #e4e9f0; text-align: right; white-space: nowrap; font-size: 11px; }
+.tbl th:first-child, .tbl td:first-child { text-align: left; }
+.tbl td { padding: 7px 10px; border-bottom: 1px solid #eef2f6; text-align: right; font-family: 'Menlo','Consolas',monospace; white-space: nowrap; }
+.tbl td:first-child { font-family: inherit; font-weight: 600; color: #4a5a6a; }
+.tbl tr:hover td { background: #fafcfe; }
+.tbl .grp { border-left: 1px solid #e4e9f0; }
+.up { color: #b4441c; } .dn { color: #1d7a5a; } .nz { color: #8a9bb0; }
+@media (max-width: 600px) {
+  .container { padding: 16px; }
+  .topbar { padding: 12px 16px; }
+  .card { padding: 16px; }
+  .grid2, .grid3 { grid-template-columns: 1fr; }
+}
 </style>
 </head>
 <body>
 
 <div class="topbar">
   <div class="topbar-info">
-    <h1>BI de NTN-B</h1>
-    <p>Curvas de juros &middot; Matriz de forwards DU/252 &middot; Calend&aacute;rio ANBIMA</p>
+    <h1>BI de Títulos Públicos</h1>
+    <p>NTN-B &middot; LTN &middot; Curvas de juros &middot; Forwards DU/252 &middot; Calend&aacute;rio ANBIMA</p>
   </div>
   <div class="topbar-right">
     <span class="refresh-status" id="refreshStatus"></span>
-    <button class="btn-refresh" id="btnRefresh" onclick="loadData()">&#8635; Atualizar dados</button>
+    <button class="btn-refresh" id="btnRefresh">&#8635; Atualizar dados</button>
   </div>
 </div>
 
 <div class="container">
-  <div class="tabs">
-    <button class="tab-btn active" id="tb-dados">Dados</button>
-    <button class="tab-btn" id="tb-curva">Curva NTN-B</button>
-    <button class="tab-btn" id="tb-fwd">Matriz de Forwards</button>
-    <button class="tab-btn" id="tb-hist">Evolu&ccedil;&atilde;o de Forwards</button>
+  <div class="main-tabs">
+    <button class="main-tab-btn active" data-main="ntnb">NTN-B</button>
+    <button class="main-tab-btn" data-main="ltn">LTN</button>
   </div>
-
-  <!-- DADOS -->
-  <div class="pane active" id="pn-dados">
-    <div class="card">
-      <div class="lbl">Fonte de dados &mdash; GitHub</div>
-      <div class="gs-hint">
-        Dados carregados automaticamente de <code>dados/ntnb_export.csv</code> no reposit&oacute;rio.<br>
-        Clique em <b>Atualizar dados</b> (barra superior) para recarregar ap&oacute;s novo commit.
-      </div>
-    </div>
-    <div class="card" id="statusCard" style="display:none">
-      <div class="lbl">Status dos dados</div>
-      <div style="margin-bottom:10px" id="statusBar"></div>
-      <div class="mrow" id="metricsRow"></div>
-    </div>
-    <div class="card">
-      <div class="lbl">Formato esperado da planilha</div>
-      <div class="formula">
-        <b>Coluna A:</b> data_referencia em formato AAAA-MM-DD (ex: 2025-03-28)<br>
-        <b>Colunas B+:</b> cabe&ccedil;alho = data de vencimento do papel em AAAA-MM-DD ou DD/MM/AAAA<br>
-        <b>Valores:</b> taxa ETTJ em % a.a. (ex: 7,50) &middot; C&eacute;lulas vazias = papel n&atilde;o existia naquela data
-      </div>
-    </div>
-  </div>
-
-  <!-- CURVA -->
-  <div class="pane" id="pn-curva">
-    <div class="card">
-      <div class="lbl">Datas para comparar</div>
-      <div class="date-tags" id="dtags"></div>
-      <div class="add-row">
-        <select id="dateSelect" style="min-width:180px"></select>
-        <button class="btnp" id="btnAddDate">+ Adicionar data</button>
-      </div>
-    </div>
-    <div class="card">
-      <div class="legend" id="curvaLeg"></div>
-      <div class="chart-wrap"><canvas id="curvaChart"></canvas></div>
-    </div>
-  </div>
-
-  <!-- MATRIZ -->
-  <div class="pane" id="pn-fwd">
-    <div class="card">
-      <div class="ctrl-row" style="margin-bottom:12px">
-        <label>Data de refer&ecirc;ncia:</label>
-        <select id="fwdDate" style="min-width:180px"></select>
-      </div>
-      <div class="info-box" id="fwdInfo">Carregue dados para ver a matriz.</div>
-    </div>
-    <div class="card">
-      <div class="lbl">Matriz de forwards (DU/252) &mdash; clique numa c&eacute;lula para acompanhar no tempo</div>
-      <div class="mx-wrap">
-        <div id="mxContainer">
-          <div class="nodata"><span class="nd-icon">&#8862;</span>Carregue dados para ver a matriz</div>
-        </div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="formula">
-        <b>F&oacute;rmula DU/252:</b>
-        f(i&rarr;j) = [ (1+r<sub>j</sub>)<sup>du<sub>j</sub>/252</sup> / (1+r<sub>i</sub>)<sup>du<sub>i</sub>/252</sup> ]<sup>252/(du<sub>j</sub>&minus;du<sub>i</sub>)</sup> &minus; 1<br>
-        du = dias &uacute;teis entre a data de refer&ecirc;ncia e o vencimento (calend&aacute;rio ANBIMA)<br>
-        Na s&eacute;rie hist&oacute;rica, du<sub>i</sub> e du<sub>j</sub> s&atilde;o recalculados para cada data &mdash; o forward de cada dia usa o prazo correto daquele dia.
-      </div>
-    </div>
-  </div>
-
-  <!-- EVOLUÇÃO -->
-  <div class="pane" id="pn-hist">
-    <div class="card">
-      <div class="lbl">Forwards acompanhados</div>
-      <div class="info-box">
-        Clique nas c&eacute;lulas da matriz para adicionar, ou selecione manualmente abaixo.<br>
-        Para cada data hist&oacute;rica, os DUs s&atilde;o recalculados a partir daquela data &mdash; o forward reflete o prazo correto de cada dia.
-      </div>
-      <div class="fwd-tags" id="fwdTags"></div>
-      <div class="add-row">
-        <label style="font-size:13px;color:#5a6a7a;font-weight:500">De:</label>
-        <select id="histFrom" style="min-width:150px"></select>
-        <label style="font-size:13px;color:#5a6a7a;font-weight:500">At&eacute;:</label>
-        <select id="histTo" style="min-width:150px"></select>
-        <button class="btnp" id="btnAddFwd">+ Adicionar</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="ctrl-row" style="margin-bottom:14px">
-        <label style="font-size:13px;color:#5a6a7a;font-weight:500">Per&iacute;odo:</label>
-        <select id="histPeriod">
-          <option value="0">Todo o hist&oacute;rico</option>
-          <option value="365">&Uacute;ltimo ano</option>
-          <option value="180">&Uacute;ltimos 6 meses</option>
-          <option value="90">&Uacute;ltimos 3 meses</option>
-          <option value="30">&Uacute;ltimo m&ecirc;s</option>
-        </select>
-      </div>
-
-      <div class="lbl" style="margin-bottom:8px">M&eacute;tricas adicionais</div>
-      <div class="metrics-box">
-        <label class="metric-chk">
-          <input type="checkbox" id="chk-sd1">
-          <span style="color:#D85A30;font-weight:500">&plusmn;1&sigma; (21 dias)</span>
-        </label>
-        <label class="metric-chk">
-          <input type="checkbox" id="chk-sd2">
-          <span style="color:#9b3010;font-weight:500">&plusmn;2&sigma; (21 dias)</span>
-        </label>
-        <div class="metric-sep"></div>
-        <label class="metric-chk">
-          <input type="checkbox" id="chk-mm21">
-          <span style="color:#1D9E75;font-weight:500">MM 21 dias</span>
-        </label>
-        <label class="metric-chk">
-          <input type="checkbox" id="chk-mm42">
-          <span style="color:#7F77DD;font-weight:500">MM 42 dias</span>
-        </label>
-        <label class="metric-chk">
-          <input type="checkbox" id="chk-mm63">
-          <span style="color:#BA7517;font-weight:500">MM 63 dias</span>
-        </label>
-      </div>
-
-      <div class="legend" id="histLeg" style="margin-top:16px"></div>
-      <div class="chart-wrap" style="height:360px;margin-top:6px"><canvas id="histChart"></canvas></div>
-
-      <div id="devSection" style="display:none">
-        <div class="dev-lbl" style="margin-top:20px">Desvio em rela&ccedil;&atilde;o &agrave; m&eacute;dia m&oacute;vel selecionada (bps)</div>
-        <div class="dev-hint" id="devHint"></div>
-        <div class="chart-wrap-sm"><canvas id="devChart"></canvas></div>
-      </div>
-    </div>
-  </div>
+  <div class="main-pane active" id="mp-ntnb"></div>
+  <div class="main-pane" id="mp-ltn"></div>
 </div>
 
 <script>
 // ══════════════════════════════════════════════════════
-// CALENDÁRIO ANBIMA (757 feriados 2001-2060)
+// CALENDÁRIO ANBIMA — gerado por regra (mesma lógica do Databricks)
+// Fixos + Carnaval (seg/ter) + Sexta Santa + Corpus Christi + 20/11 a partir de 2024
 // ══════════════════════════════════════════════════════
 var HOLIDAYS = {};
 (function() {
-  var h = [
-    "2001-01-01","2001-02-26","2001-02-27","2001-04-13","2001-04-21","2001-05-01","2001-06-14","2001-09-07","2001-10-12","2001-11-02","2001-11-15","2001-12-25",
-    "2002-01-01","2002-02-11","2002-02-12","2002-03-29","2002-04-21","2002-05-01","2002-05-30","2002-09-07","2002-10-12","2002-11-02","2002-11-15","2002-12-25",
-    "2003-01-01","2003-03-03","2003-03-04","2003-04-18","2003-04-21","2003-05-01","2003-06-19","2003-09-07","2003-10-12","2003-11-02","2003-11-15","2003-12-25",
-    "2004-01-01","2004-02-23","2004-02-24","2004-04-09","2004-04-21","2004-05-01","2004-06-10","2004-09-07","2004-10-12","2004-11-02","2004-11-15","2004-12-25",
-    "2005-01-01","2005-02-07","2005-02-08","2005-03-25","2005-04-21","2005-05-01","2005-05-26","2005-09-07","2005-10-12","2005-11-02","2005-11-15","2005-12-25",
-    "2006-01-01","2006-02-27","2006-02-28","2006-04-14","2006-04-21","2006-05-01","2006-06-15","2006-09-07","2006-10-12","2006-11-02","2006-11-15","2006-12-25",
-    "2007-01-01","2007-02-19","2007-02-20","2007-04-06","2007-04-21","2007-05-01","2007-06-07","2007-09-07","2007-10-12","2007-11-02","2007-11-15","2007-12-25",
-    "2008-01-01","2008-02-04","2008-02-05","2008-03-21","2008-04-21","2008-05-01","2008-05-22","2008-09-07","2008-10-12","2008-11-02","2008-11-15","2008-12-25",
-    "2009-01-01","2009-02-23","2009-02-24","2009-04-10","2009-04-21","2009-05-01","2009-06-11","2009-09-07","2009-10-12","2009-11-02","2009-11-15","2009-12-25",
-    "2010-01-01","2010-02-15","2010-02-16","2010-04-02","2010-04-21","2010-05-01","2010-06-03","2010-09-07","2010-10-12","2010-11-02","2010-11-15","2010-12-25",
-    "2011-01-01","2011-03-07","2011-03-08","2011-04-21","2011-04-22","2011-05-01","2011-06-23","2011-09-07","2011-10-12","2011-11-02","2011-11-15","2011-12-25",
-    "2012-01-01","2012-02-20","2012-02-21","2012-04-06","2012-04-21","2012-05-01","2012-06-07","2012-09-07","2012-10-12","2012-11-02","2012-11-15","2012-12-25",
-    "2013-01-01","2013-02-11","2013-02-12","2013-03-29","2013-04-21","2013-05-01","2013-05-30","2013-09-07","2013-10-12","2013-11-02","2013-11-15","2013-12-25",
-    "2014-01-01","2014-03-03","2014-03-04","2014-04-18","2014-04-21","2014-05-01","2014-06-19","2014-09-07","2014-10-12","2014-11-02","2014-11-15","2014-12-25",
-    "2015-01-01","2015-02-16","2015-02-17","2015-04-03","2015-04-21","2015-05-01","2015-06-04","2015-09-07","2015-10-12","2015-11-02","2015-11-15","2015-12-25",
-    "2016-01-01","2016-02-08","2016-02-09","2016-03-25","2016-04-21","2016-05-01","2016-05-26","2016-09-07","2016-10-12","2016-11-02","2016-11-15","2016-12-25",
-    "2017-01-01","2017-02-27","2017-02-28","2017-04-14","2017-04-21","2017-05-01","2017-06-15","2017-09-07","2017-10-12","2017-11-02","2017-11-15","2017-12-25",
-    "2018-01-01","2018-02-12","2018-02-13","2018-03-30","2018-04-21","2018-05-01","2018-05-31","2018-09-07","2018-10-12","2018-11-02","2018-11-15","2018-12-25",
-    "2019-01-01","2019-03-04","2019-03-05","2019-04-19","2019-04-21","2019-05-01","2019-06-20","2019-09-07","2019-10-12","2019-11-02","2019-11-15","2019-12-25",
-    "2020-01-01","2020-02-24","2020-02-25","2020-04-10","2020-04-21","2020-05-01","2020-06-11","2020-09-07","2020-10-12","2020-11-02","2020-11-15","2020-12-25",
-    "2021-01-01","2021-02-15","2021-02-16","2021-04-02","2021-04-21","2021-05-01","2021-06-03","2021-09-07","2021-10-12","2021-11-02","2021-11-15","2021-12-25",
-    "2022-01-01","2022-02-28","2022-03-01","2022-04-15","2022-04-21","2022-05-01","2022-06-16","2022-09-07","2022-10-12","2022-11-02","2022-11-15","2022-12-25",
-    "2023-01-01","2023-02-20","2023-02-21","2023-04-07","2023-04-21","2023-05-01","2023-06-08","2023-09-07","2023-10-12","2023-11-02","2023-11-15","2023-12-25",
-    "2024-01-01","2024-02-12","2024-02-13","2024-03-29","2024-04-21","2024-05-01","2024-05-30","2024-09-07","2024-10-12","2024-11-02","2024-11-15","2024-11-20","2024-12-25",
-    "2025-01-01","2025-03-03","2025-03-04","2025-04-18","2025-04-21","2025-05-01","2025-06-19","2025-09-07","2025-10-12","2025-11-02","2025-11-15","2025-11-20","2025-12-25",
-    "2026-01-01","2026-02-16","2026-02-17","2026-04-03","2026-04-21","2026-05-01","2026-06-04","2026-09-07","2026-10-12","2026-11-02","2026-11-15","2026-11-20","2026-12-25",
-    "2027-01-01","2027-02-08","2027-02-09","2027-03-26","2027-04-21","2027-05-01","2027-05-27","2027-09-07","2027-10-12","2027-11-02","2027-11-15","2027-11-20","2027-12-25",
-    "2028-01-01","2028-02-28","2028-02-29","2028-04-14","2028-04-21","2028-05-01","2028-06-15","2028-09-07","2028-10-12","2028-11-02","2028-11-15","2028-11-20","2028-12-25",
-    "2029-01-01","2029-02-12","2029-02-13","2029-03-30","2029-04-21","2029-05-01","2029-05-31","2029-09-07","2029-10-12","2029-11-02","2029-11-15","2029-11-20","2029-12-25",
-    "2030-01-01","2030-03-04","2030-03-05","2030-04-19","2030-04-21","2030-05-01","2030-06-20","2030-09-07","2030-10-12","2030-11-02","2030-11-15","2030-11-20","2030-12-25",
-    "2031-01-01","2031-02-24","2031-02-25","2031-04-11","2031-04-21","2031-05-01","2031-06-12","2031-09-07","2031-10-12","2031-11-02","2031-11-15","2031-11-20","2031-12-25",
-    "2032-01-01","2032-02-09","2032-02-10","2032-03-26","2032-04-21","2032-05-01","2032-05-27","2032-09-07","2032-10-12","2032-11-02","2032-11-15","2032-11-20","2032-12-25",
-    "2033-01-01","2033-02-28","2033-03-01","2033-04-15","2033-04-21","2033-05-01","2033-06-16","2033-09-07","2033-10-12","2033-11-02","2033-11-15","2033-11-20","2033-12-25",
-    "2034-01-01","2034-02-20","2034-02-21","2034-04-07","2034-04-21","2034-05-01","2034-06-08","2034-09-07","2034-10-12","2034-11-02","2034-11-15","2034-11-20","2034-12-25",
-    "2035-01-01","2035-02-05","2035-02-06","2035-03-23","2035-04-21","2035-05-01","2035-05-24","2035-09-07","2035-10-12","2035-11-02","2035-11-15","2035-11-20","2035-12-25",
-    "2036-01-01","2036-02-25","2036-02-26","2036-04-11","2036-04-21","2036-05-01","2036-06-12","2036-09-07","2036-10-12","2036-11-02","2036-11-15","2036-11-20","2036-12-25",
-    "2037-01-01","2037-02-16","2037-02-17","2037-04-03","2037-04-21","2037-05-01","2037-06-04","2037-09-07","2037-10-12","2037-11-02","2037-11-15","2037-11-20","2037-12-25",
-    "2038-01-01","2038-03-08","2038-03-09","2038-04-21","2038-04-23","2038-05-01","2038-06-24","2038-09-07","2038-10-12","2038-11-02","2038-11-15","2038-11-20","2038-12-25",
-    "2039-01-01","2039-02-21","2039-02-22","2039-04-08","2039-04-21","2039-05-01","2039-06-09","2039-09-07","2039-10-12","2039-11-02","2039-11-15","2039-11-20","2039-12-25",
-    "2040-01-01","2040-02-13","2040-02-14","2040-03-30","2040-04-21","2040-05-01","2040-05-31","2040-09-07","2040-10-12","2040-11-02","2040-11-15","2040-11-20","2040-12-25",
-    "2041-01-01","2041-03-04","2041-03-05","2041-04-19","2041-04-21","2041-05-01","2041-06-20","2041-09-07","2041-10-12","2041-11-02","2041-11-15","2041-11-20","2041-12-25",
-    "2042-01-01","2042-02-17","2042-02-18","2042-04-04","2042-04-21","2042-05-01","2042-06-05","2042-09-07","2042-10-12","2042-11-02","2042-11-15","2042-11-20","2042-12-25",
-    "2043-01-01","2043-02-09","2043-02-10","2043-03-27","2043-04-21","2043-05-01","2043-05-28","2043-09-07","2043-10-12","2043-11-02","2043-11-15","2043-11-20","2043-12-25",
-    "2044-01-01","2044-02-29","2044-03-01","2044-04-15","2044-04-21","2044-05-01","2044-06-16","2044-09-07","2044-10-12","2044-11-02","2044-11-15","2044-11-20","2044-12-25",
-    "2045-01-01","2045-02-20","2045-02-21","2045-04-07","2045-04-21","2045-05-01","2045-06-08","2045-09-07","2045-10-12","2045-11-02","2045-11-15","2045-11-20","2045-12-25",
-    "2046-01-01","2046-02-05","2046-02-06","2046-03-23","2046-04-21","2046-05-01","2046-05-24","2046-09-07","2046-10-12","2046-11-02","2046-11-15","2046-11-20","2046-12-25",
-    "2047-01-01","2047-02-25","2047-02-26","2047-04-12","2047-04-21","2047-05-01","2047-06-13","2047-09-07","2047-10-12","2047-11-02","2047-11-15","2047-11-20","2047-12-25",
-    "2048-01-01","2048-02-17","2048-02-18","2048-04-03","2048-04-21","2048-05-01","2048-06-04","2048-09-07","2048-10-12","2048-11-02","2048-11-15","2048-11-20","2048-12-25",
-    "2049-01-01","2049-03-01","2049-03-02","2049-04-16","2049-04-21","2049-05-01","2049-06-17","2049-09-07","2049-10-12","2049-11-02","2049-11-15","2049-11-20","2049-12-25",
-    "2050-01-01","2050-02-21","2050-02-22","2050-04-08","2050-04-21","2050-05-01","2050-06-09","2050-09-07","2050-10-12","2050-11-02","2050-11-15","2050-11-20","2050-12-25",
-    "2051-01-01","2051-02-13","2051-02-14","2051-03-31","2051-04-21","2051-05-01","2051-06-01","2051-09-07","2051-10-12","2051-11-02","2051-11-15","2051-11-20","2051-12-25",
-    "2052-01-01","2052-03-04","2052-03-05","2052-04-19","2052-04-21","2052-05-01","2052-06-20","2052-09-07","2052-10-12","2052-11-02","2052-11-15","2052-11-20","2052-12-25",
-    "2053-01-01","2053-02-17","2053-02-18","2053-04-04","2053-04-21","2053-05-01","2053-06-05","2053-09-07","2053-10-12","2053-11-02","2053-11-15","2053-11-20","2053-12-25",
-    "2054-01-01","2054-02-09","2054-02-10","2054-03-27","2054-04-21","2054-05-01","2054-05-28","2054-09-07","2054-10-12","2054-11-02","2054-11-15","2054-11-20","2054-12-25",
-    "2055-01-01","2055-03-01","2055-03-02","2055-04-16","2055-04-21","2055-05-01","2055-06-17","2055-09-07","2055-10-12","2055-11-02","2055-11-15","2055-11-20","2055-12-25",
-    "2056-01-01","2056-02-14","2056-02-15","2056-03-31","2056-04-21","2056-05-01","2056-06-01","2056-09-07","2056-10-12","2056-11-02","2056-11-15","2056-11-20","2056-12-25",
-    "2057-01-01","2057-03-05","2057-03-06","2057-04-20","2057-04-21","2057-05-01","2057-06-21","2057-09-07","2057-10-12","2057-11-02","2057-11-15","2057-11-20","2057-12-25",
-    "2058-01-01","2058-02-25","2058-02-26","2058-04-12","2058-04-21","2058-05-01","2058-06-13","2058-09-07","2058-10-12","2058-11-02","2058-11-15","2058-11-20","2058-12-25",
-    "2059-01-01","2059-02-10","2059-02-11","2059-03-28","2059-04-21","2059-05-01","2059-05-29","2059-09-07","2059-10-12","2059-11-02","2059-11-15","2059-11-20","2059-12-25",
-    "2060-01-01","2060-03-01","2060-03-02","2060-04-16","2060-04-21","2060-05-01","2060-06-17","2060-09-07","2060-10-12","2060-11-02","2060-11-15","2060-11-20","2060-12-25"
-  ];
-  for (var i = 0; i < h.length; i++) { HOLIDAYS[h[i]] = true; }
+  function iso(d) { return d.toISOString().slice(0, 10); }
+  function pascoa(y) {
+    var a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4;
+    var f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3), h = (19*a + b - d - g + 15) % 30;
+    var i = Math.floor(c / 4), k = c % 4, l = (32 + 2*e + 2*i - h - k) % 7, m = Math.floor((a + 11*h + 22*l) / 451);
+    var mo = Math.floor((h + l - 7*m + 114) / 31), dy = ((h + l - 7*m + 114) % 31) + 1;
+    return new Date(Date.UTC(y, mo - 1, dy, 12));
+  }
+  function add(d, n) { var x = new Date(d.getTime()); x.setUTCDate(x.getUTCDate() + n); return x; }
+  for (var y = 2000; y <= 2070; y++) {
+    ['01-01','04-21','05-01','09-07','10-12','11-02','11-15','12-25'].forEach(function(md) { HOLIDAYS[y + '-' + md] = true; });
+    if (y >= 2024) { HOLIDAYS[y + '-11-20'] = true; }
+    var p = pascoa(y);
+    [-48, -47, -2, 60].forEach(function(n) { HOLIDAYS[iso(add(p, n))] = true; });
+  }
 }());
 
-// ══════════════════════════════════════════════════════
-// ÍNDICE DE DIAS ÚTEIS
-// ══════════════════════════════════════════════════════
 var DU_INDEX = null;
 function buildDUIndex(maxISO) {
   if (DU_INDEX && DU_INDEX.upTo >= maxISO) { return; }
   var map = {}, count = 0;
   var cur = new Date('2000-01-01T12:00:00Z');
   var maxDate = new Date(maxISO + 'T12:00:00Z');
-  maxDate.setFullYear(maxDate.getFullYear() + 1);
+  maxDate.setUTCFullYear(maxDate.getUTCFullYear() + 1);
   while (cur <= maxDate) {
-    var y = cur.getUTCFullYear(), m = cur.getUTCMonth() + 1, d = cur.getUTCDate();
-    var iso = y + '-' + (m < 10 ? '0' : '') + m + '-' + (d < 10 ? '0' : '') + d;
+    var iso = cur.toISOString().slice(0, 10);
     map[iso] = count;
     var dow = cur.getUTCDay();
     if (dow !== 0 && dow !== 6 && !HOLIDAYS[iso]) { count++; }
@@ -331,9 +179,7 @@ function countDU(fromISO, toISO) {
 }
 
 // ══════════════════════════════════════════════════════
-// FORWARD DU/252
-// Os DUs são calculados a partir da data de referência
-// de cada observação — correto para série histórica.
+// FORWARD DU/252 E ESTATÍSTICAS
 // ══════════════════════════════════════════════════════
 function calcFwdDU(ri, rj, dui, duj) {
   if (!dui || !duj || duj <= dui || dui <= 0) { return null; }
@@ -342,131 +188,48 @@ function calcFwdDU(ri, rj, dui, duj) {
   if (Fi <= 0 || Fj <= 0 || Fj <= Fi) { return null; }
   return (Math.pow(Fj / Fi, 252 / (duj - dui)) - 1) * 100;
 }
-
-// ══════════════════════════════════════════════════════
-// ESTATÍSTICAS
-// ══════════════════════════════════════════════════════
 function movingAvg(data, W) {
   var result = [];
   for (var i = 0; i < data.length; i++) {
     if (i < W - 1) { result.push(null); continue; }
     var sum = 0, cnt = 0;
-    for (var j = i - W + 1; j <= i; j++) {
-      if (data[j] !== null && data[j] !== undefined) { sum += data[j]; cnt++; }
-    }
+    for (var j = i - W + 1; j <= i; j++) { if (data[j] !== null && data[j] !== undefined) { sum += data[j]; cnt++; } }
     result.push(cnt > 0 ? sum / cnt : null);
   }
   return result;
 }
-
-// Bandas de desvio padrão: nSigma = 1 ou 2
 function movingStdBands(data, W, nSigma) {
   var upper = [], lower = [];
   nSigma = nSigma || 1;
   for (var i = 0; i < data.length; i++) {
-    if (i < W - 1 || data[i] === null || data[i] === undefined) {
-      upper.push(null); lower.push(null); continue;
-    }
+    if (i < W - 1 || data[i] === null || data[i] === undefined) { upper.push(null); lower.push(null); continue; }
     var vals = [];
-    for (var j = i - W + 1; j <= i; j++) {
-      if (data[j] !== null && data[j] !== undefined) { vals.push(data[j]); }
-    }
+    for (var j = i - W + 1; j <= i; j++) { if (data[j] !== null && data[j] !== undefined) { vals.push(data[j]); } }
     if (vals.length < 2) { upper.push(null); lower.push(null); continue; }
-    var mean = 0;
-    for (var k = 0; k < vals.length; k++) { mean += vals[k]; }
+    var mean = 0, k;
+    for (k = 0; k < vals.length; k++) { mean += vals[k]; }
     mean /= vals.length;
     var variance = 0;
-    for (var k = 0; k < vals.length; k++) { variance += (vals[k] - mean) * (vals[k] - mean); }
+    for (k = 0; k < vals.length; k++) { variance += (vals[k] - mean) * (vals[k] - mean); }
     var std = Math.sqrt(variance / (vals.length - 1));
     upper.push(parseFloat((mean + nSigma * std).toFixed(4)));
     lower.push(parseFloat((mean - nSigma * std).toFixed(4)));
   }
   return { upper: upper, lower: lower };
 }
-
 function calcDeviation(data, mm) {
-  var result = [];
-  for (var i = 0; i < data.length; i++) {
-    if (data[i] === null || data[i] === undefined || mm[i] === null || mm[i] === undefined) {
-      result.push(null);
-    } else {
-      result.push(parseFloat(((data[i] - mm[i]) * 100).toFixed(2)));
-    }
-  }
-  return result;
-}
-
-// ══════════════════════════════════════════════════════
-// ESTADO GLOBAL
-// ══════════════════════════════════════════════════════
-var DB = {}, ALL_VENC = [], VENC_ISO = {}, selDates = [], trackedFwds = [];
-var curvaInst = null, histInst = null, devInst = null;
-var COLORS  = ['#185FA5','#D85A30','#1D9E75','#7F77DD','#BA7517','#993556','#639922','#E24B4A'];
-var DASHES  = [[], [6,3], [2,2], [8,2,2,2], [4,4]];
-var C_SD1   = '#D85A30', C_SD2 = '#9b3010';
-var C_MM21  = '#1D9E75', C_MM42 = '#7F77DD', C_MM63 = '#BA7517';
-
-// ══════════════════════════════════════════════════════
-// TABS
-// ══════════════════════════════════════════════════════
-(function() {
-  ['dados','curva','fwd','hist'].forEach(function(name) {
-    document.getElementById('tb-' + name).addEventListener('click', function() {
-      document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
-      document.querySelectorAll('.pane').forEach(function(p)   { p.classList.remove('active'); });
-      document.getElementById('tb-' + name).classList.add('active');
-      document.getElementById('pn-' + name).classList.add('active');
-      if (name === 'curva') renderCurva();
-      if (name === 'fwd')   renderForward();
-      if (name === 'hist')  { populateHistSelects(); renderHist(); }
-    });
+  return data.map(function(v, i) {
+    return (v === null || v === undefined || mm[i] === null || mm[i] === undefined) ? null : parseFloat(((v - mm[i]) * 100).toFixed(2));
   });
-}());
-
-document.getElementById('btnAddDate').addEventListener('click', addDate);
-document.getElementById('fwdDate').addEventListener('change', renderForward);
-document.getElementById('btnAddFwd').addEventListener('click', addFwdFromSelects);
-document.getElementById('histPeriod').addEventListener('change', renderHist);
-['chk-sd1','chk-sd2','chk-mm21','chk-mm42','chk-mm63'].forEach(function(id) {
-  document.getElementById(id).addEventListener('change', renderHist);
-});
-
-// ══════════════════════════════════════════════════════
-// CARGA DO GOOGLE SHEETS
-// ══════════════════════════════════════════════════════
-// URL raw do CSV no GitHub — relativa ao domínio do GitHub Pages
-var CSV_URL = 'dados/ntnb_export.csv';
-
-function loadData() {
-  var btn = document.getElementById('btnRefresh');
-  btn.classList.add('loading'); btn.textContent = '⏳ Carregando...';
-  document.getElementById('refreshStatus').textContent = '';
-
-  // Cache-busting para garantir dados frescos após novo commit
-  var url = CSV_URL + '?t=' + Date.now();
-  fetch(url)
-    .then(function(r) {
-      if (!r.ok) { throw new Error('HTTP ' + r.status); }
-      return r.text();
-    })
-    .then(function(csv) {
-      parseCSV(csv);
-      btn.classList.remove('loading'); btn.textContent = '⟳ Atualizar dados';
-      var now = new Date();
-      document.getElementById('refreshStatus').textContent =
-        'Atualizado ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    })
-    .catch(function(err) {
-      btn.classList.remove('loading'); btn.textContent = '⟳ Atualizar dados';
-      document.getElementById('statusCard').style.display = 'block';
-      document.getElementById('statusBar').innerHTML =
-        '<span class="sbadge sbadge-err">&#10005; Erro ao carregar</span> ' + err.message;
-    });
 }
 
 // ══════════════════════════════════════════════════════
-// PARSE CSV
+// UTILITÁRIOS
 // ══════════════════════════════════════════════════════
+var COLORS = ['#185FA5','#D85A30','#1D9E75','#7F77DD','#BA7517','#993556','#639922','#E24B4A'];
+var DASHES = [[], [6,3], [2,2], [8,2,2,2], [4,4]];
+var C_SD1 = '#D85A30', C_SD2 = '#9b3010', C_MM21 = '#1D9E75', C_MM42 = '#7F77DD', C_MM63 = '#BA7517';
+
 function parseLine(line) {
   var result = [], cur = '', inQ = false;
   for (var i = 0; i < line.length; i++) {
@@ -478,7 +241,6 @@ function parseLine(line) {
   result.push(cur.trim());
   return result;
 }
-
 function toDateISO(s) {
   if (!s) { return null; }
   s = String(s).trim();
@@ -487,421 +249,767 @@ function toDateISO(s) {
   if (m) { return m[3] + '-' + m[2].padStart(2,'0') + '-' + m[1].padStart(2,'0'); }
   return null;
 }
-
-function parseCSV(text) {
-  var lines = text.split(/\r?\n/).filter(function(l) { return l.trim() !== ''; });
-  if (lines.length < 2) { alert('Planilha vazia ou sem dados.'); return; }
-
-  var header      = parseLine(lines[0]);
-  var vencHeaders = header.slice(1).filter(function(v) { return v !== ''; });
-
-  VENC_ISO = {}; ALL_VENC = [];
-  vencHeaders.forEach(function(raw) {
-    var iso = toDateISO(raw);
-    if (iso) { VENC_ISO[raw] = iso; ALL_VENC.push(raw); }
-  });
-  ALL_VENC.sort(function(a, b) { return VENC_ISO[a] < VENC_ISO[b] ? -1 : 1; });
-
-  if (!ALL_VENC.length) { alert('Nenhum vencimento válido encontrado nos cabeçalhos.'); return; }
-  buildDUIndex(VENC_ISO[ALL_VENC[ALL_VENC.length - 1]]);
-
-  DB = {};
-  for (var r = 1; r < lines.length; r++) {
-    var row     = parseLine(lines[r]);
-    var dateISO = toDateISO(row[0]);
-    if (!dateISO) { continue; }
-    DB[dateISO] = {};
-    vencHeaders.forEach(function(key, vi) {
-      var val = row[vi + 1];
-      if (val !== undefined && val !== null && val !== '') {
-        var n = parseFloat(val.replace(',', '.'));
-        if (!isNaN(n) && n > 0 && n < 100) { DB[dateISO][key] = n; }
-      }
-    });
-  }
-  finishLoad();
+function toNum(s) {
+  if (s === undefined || s === null || s === '') { return null; }
+  var n = parseFloat(String(s).replace(',', '.'));
+  return isNaN(n) ? null : n;
 }
-
 function fmt(iso) {
   if (!iso) { return ''; }
   var p = iso.split('-');
   return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : iso;
 }
-
-function getVencDU(vencKey, refISO) {
-  var viso = VENC_ISO[vencKey]; if (!viso) { return null; }
-  var du = countDU(refISO, viso);
-  return (du !== null && du > 0) ? du : null;
-}
-
-function activeVenc(date) {
-  if (!DB[date]) { return []; }
-  return ALL_VENC.filter(function(v) {
-    return DB[date][v] !== undefined && getVencDU(v, date) !== null;
-  });
-}
-
-function getFwdValue(date, from, to) {
-  if (!DB[date] || DB[date][from] === undefined || DB[date][to] === undefined) { return null; }
-  var dui = getVencDU(from, date), duj = getVencDU(to, date);
-  return calcFwdDU(DB[date][from], DB[date][to], dui, duj);
-}
-
-function finishLoad() {
-  var dates = Object.keys(DB).sort();
-  if (!dates.length) { alert('Nenhuma data válida encontrada.'); return; }
-
-  document.getElementById('statusCard').style.display = 'block';
-  document.getElementById('statusBar').innerHTML =
-    '<span class="sbadge">&#10003; Dados carregados</span> &nbsp;' +
-    dates.length + ' datas &middot; ' + ALL_VENC.length + ' vencimentos &middot; ' +
-    fmt(dates[0]) + ' a ' + fmt(dates[dates.length - 1]);
-  document.getElementById('metricsRow').innerHTML =
-    '<div class="met"><div class="met-lbl">Datas</div><div class="met-val">' + dates.length + '</div></div>' +
-    '<div class="met"><div class="met-lbl">Vencimentos</div><div class="met-val">' + ALL_VENC.length + '</div></div>' +
-    '<div class="met"><div class="met-lbl">In&iacute;cio</div><div class="met-val">' + fmt(dates[0]) + '</div></div>' +
-    '<div class="met"><div class="met-lbl">Fim</div><div class="met-val">' + fmt(dates[dates.length - 1]) + '</div></div>';
-
-  selDates    = [dates[dates.length - 1]];
-  if (dates.length > 60) { selDates.push(dates[dates.length - 61]); }
-  trackedFwds = [];
-
-  var sorted = dates.slice().reverse();
-  var opts   = sorted.map(function(d) { return '<option value="' + d + '">' + fmt(d) + '</option>'; }).join('');
-  document.getElementById('dateSelect').innerHTML = opts;
-  document.getElementById('fwdDate').innerHTML    = opts;
-  populateHistSelects(); updateTags(); renderForward();
-}
-
-// ══════════════════════════════════════════════════════
-// CURVA
-// ══════════════════════════════════════════════════════
-function addDate() {
-  var v = document.getElementById('dateSelect').value;
-  if (!v || !DB[v] || selDates.indexOf(v) >= 0) { return; }
-  selDates.push(v); updateTags(); renderCurva();
-}
-function removeDate(d) {
-  selDates = selDates.filter(function(x) { return x !== d; });
-  updateTags(); renderCurva();
-}
-function updateTags() {
-  var c = document.getElementById('dtags');
-  c.innerHTML = selDates.map(function(d) {
-    return '<div class="dtag"><span>' + fmt(d) + '</span><button data-d="' + d + '">&times;</button></div>';
-  }).join('');
-  c.querySelectorAll('button').forEach(function(btn) {
-    btn.addEventListener('click', function() { removeDate(this.getAttribute('data-d')); });
-  });
-}
-function renderCurva() {
-  if (!Object.keys(DB).length || !selDates.length) { return; }
-  var activeSet = {};
-  selDates.forEach(function(d) { activeVenc(d).forEach(function(v) { activeSet[v] = true; }); });
-  var labels   = ALL_VENC.filter(function(v) { return activeSet[v]; });
-  var datasets = selDates.map(function(date, di) {
-    var avSet = {};
-    activeVenc(date).forEach(function(v) { avSet[v] = true; });
-    return {
-      label: fmt(date),
-      data:  labels.map(function(v) { return avSet[v] ? DB[date][v] : null; }),
-      borderColor: COLORS[di % COLORS.length], backgroundColor: 'transparent',
-      borderWidth: 2, pointRadius: 4, pointHoverRadius: 6, tension: 0.3,
-      borderDash: DASHES[di % DASHES.length], spanGaps: false
-    };
-  });
-  document.getElementById('curvaLeg').innerHTML = selDates.map(function(d, di) {
-    return '<div class="li"><div class="ld" style="background:' + COLORS[di % COLORS.length] + '"></div><span>' + fmt(d) + '</span></div>';
-  }).join('');
-  if (curvaInst) { curvaInst.destroy(); curvaInst = null; }
-  curvaInst = new Chart(document.getElementById('curvaChart'), {
-    type: 'line',
-    data: { labels: labels.map(function(v) { return fmt(VENC_ISO[v] || v); }), datasets: datasets },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: { legend: { display: false }, tooltip: { callbacks: {
-        label:  function(c) { return c.parsed.y != null ? c.dataset.label + ': ' + c.parsed.y.toFixed(2) + '% a.a.' : null; },
-        filter: function(i) { return i.parsed.y != null; }
-      }}},
-      scales: {
-        x: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { maxRotation: 35, font: { size: 10 }, autoSkip: true, maxTicksLimit: 10 } },
-        y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { callback: function(v) { return v.toFixed(2) + '%'; }, font: { size: 11 } },
-             title: { display: true, text: '% a.a.', font: { size: 11 }, color: '#8a9bb0' } }
-      }
-    }
-  });
-}
-
-// ══════════════════════════════════════════════════════
-// MATRIZ DE FORWARDS
-// ══════════════════════════════════════════════════════
-function renderForward() {
-  var sel  = document.getElementById('fwdDate');
-  var date = sel.value || (sel.options[0] && sel.options[0].value);
-  if (date && sel.value !== date) { sel.value = date; }
-  var info      = document.getElementById('fwdInfo');
-  var container = document.getElementById('mxContainer');
-  if (!date || !DB[date]) {
-    info.textContent = 'Carregue dados para ver a matriz.';
-    container.innerHTML = '<div class="nodata"><span class="nd-icon">&#8862;</span>Carregue dados para ver a matriz</div>';
-    return;
-  }
-  var venc  = activeVenc(date);
-  var rates = venc.map(function(v) { return DB[date][v]; });
-  var dus   = venc.map(function(v) { return getVencDU(v, date); });
-  info.textContent = 'Data: ' + fmt(date) + ' · ' + venc.length + ' vencimentos ativos · DU/252 · Clique numa célula para acompanhar';
-  if (venc.length < 2) {
-    container.innerHTML = '<div class="nodata"><span class="nd-icon">&#8862;</span>Menos de 2 vencimentos nesta data</div>'; return;
-  }
-  var allFwd = [], matrix = [];
-  for (var i = 0; i < venc.length; i++) {
-    matrix[i] = [];
-    for (var j = 0; j < venc.length; j++) {
-      if (i >= j) { matrix[i][j] = null; continue; }
-      var f = calcFwdDU(rates[i], rates[j], dus[i], dus[j]);
-      matrix[i][j] = f; if (f !== null) { allFwd.push(f); }
-    }
-  }
-  if (!allFwd.length) { container.innerHTML = '<div class="nodata">Nenhum forward calculado.</div>'; return; }
-  var maxF = Math.max.apply(null, allFwd), minF = Math.min.apply(null, allFwd), rng = maxF - minF || 1;
-  function cc(v) { var n = (v - minF) / rng; return n > 0.66 ? 'ch' : n > 0.33 ? 'cm' : 'cl'; }
-  var html = '<table class="mx"><thead><tr><th>&#8595; De / At&eacute; &#8594;</th>';
-  venc.forEach(function(v, j) {
-    html += '<th>' + fmt(VENC_ISO[v]) + '<br><span style="font-weight:400;font-size:9px;color:#8a9bb0">' + dus[j] + ' DU</span></th>';
-  });
-  html += '</tr></thead><tbody>';
-  venc.forEach(function(vi, i) {
-    html += '<tr><td class="rl">' + fmt(VENC_ISO[vi]) + '<br><span style="font-weight:400;font-size:10px;color:#8a9bb0">' + rates[i].toFixed(2) + '% &middot; ' + dus[i] + ' DU</span></td>';
-    venc.forEach(function(vj, j) {
-      if (i === j) { html += '<td class="cd">&mdash;</td>'; }
-      else if (i > j) { html += '<td class="cn">&middot;</td>'; }
-      else {
-        var v2 = matrix[i][j]; if (v2 === null) { html += '<td class="cn">&mdash;</td>'; return; }
-        var isTk = trackedFwds.some(function(t) { return t.from === vi && t.to === vj; });
-        html += '<td class="' + cc(v2) + (isTk ? ' tracked' : '') + '" data-from="' + vi + '" data-to="' + vj + '">' + v2.toFixed(2) + '%</td>';
-      }
-    });
-    html += '</tr>';
-  });
-  html += '</tbody></table>';
-  container.innerHTML = html;
-  container.querySelectorAll('td[data-from]').forEach(function(td) {
-    td.addEventListener('click', function() { addTrackedFwd(this.getAttribute('data-from'), this.getAttribute('data-to')); });
-  });
-}
-
-// ══════════════════════════════════════════════════════
-// FORWARDS ACOMPANHADOS
-// ══════════════════════════════════════════════════════
-function addTrackedFwd(from, to) {
-  if (!from || !to || from === to) { return; }
-  if (trackedFwds.some(function(t) { return t.from === from && t.to === to; })) { return; }
-  trackedFwds.push({ from: from, to: to, color: COLORS[trackedFwds.length % COLORS.length] });
-  updateFwdTags(); renderForward();
-  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
-  document.querySelectorAll('.pane').forEach(function(p)   { p.classList.remove('active'); });
-  document.getElementById('tb-hist').classList.add('active');
-  document.getElementById('pn-hist').classList.add('active');
-  populateHistSelects(); renderHist();
-}
-function removeTrackedFwd(idx) {
-  trackedFwds.splice(idx, 1);
-  trackedFwds.forEach(function(t, i) { t.color = COLORS[i % COLORS.length]; });
-  updateFwdTags(); renderForward(); renderHist();
-}
-function updateFwdTags() {
-  var c = document.getElementById('fwdTags');
-  if (!trackedFwds.length) {
-    c.innerHTML = '<span style="font-size:13px;color:#8a9bb0">Nenhum forward selecionado ainda.</span>'; return;
-  }
-  c.innerHTML = trackedFwds.map(function(t, i) {
-    return '<div class="ftag" style="background:' + hexA(t.color,0.08) + ';border-color:' + t.color + ';color:' + t.color + '">' +
-      fmt(VENC_ISO[t.from]) + ' &rarr; ' + fmt(VENC_ISO[t.to]) +
-      '<button data-i="' + i + '" style="color:' + t.color + '">&times;</button></div>';
-  }).join('');
-  c.querySelectorAll('button').forEach(function(btn) {
-    btn.addEventListener('click', function() { removeTrackedFwd(parseInt(this.getAttribute('data-i'))); });
-  });
+function fmtShort(iso) {   // 01/04/27
+  var p = iso.split('-'); return p[2] + '/' + p[1] + '/' + p[0].slice(2);
 }
 function hexA(hex, a) {
   var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
   return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
 }
-function addFwdFromSelects() {
-  var from = document.getElementById('histFrom').value, to = document.getElementById('histTo').value;
-  if (!from || !to || from === to) { alert('Selecione dois vencimentos diferentes.'); return; }
-  addTrackedFwd(from, to);
+function periodFilter(dates, days) {
+  if (!days) { return dates; }
+  var cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
+  var cutStr = cutoff.toISOString().slice(0, 10);
+  return dates.filter(function(d) { return d >= cutStr; });
 }
-function populateHistSelects() {
-  ['histFrom','histTo'].forEach(function(id) {
-    var sel = document.getElementById(id), cur = sel.value;
-    sel.innerHTML = ALL_VENC.map(function(v) {
-      return '<option value="' + v + '"' + (v === cur ? ' selected' : '') + '>' + fmt(VENC_ISO[v] || v) + '</option>';
+function subsample(n, maxPts) {   // índices a manter
+  var step = Math.max(1, Math.ceil(n / maxPts)), idx = [];
+  for (var i = 0; i < n; i++) { if (i % step === 0 || i === n - 1) { idx.push(i); } }
+  return idx;
+}
+function lineOptions(yFmt, yTitle, extra) {
+  var o = {
+    responsive: true, maintainAspectRatio: false, animation: { duration: 250 },
+    interaction: { mode: 'index', intersect: false },
+    plugins: { legend: { display: false }, tooltip: { callbacks: {
+      label:  function(c) { return c.parsed.y != null ? c.dataset.label + ': ' + yFmt(c.parsed.y) : null; },
+      filter: function(i) { return i.parsed.y != null; }
+    }}},
+    scales: {
+      x: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { maxRotation: 35, font: { size: 10 }, autoSkip: true, maxTicksLimit: 14 } },
+      y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { callback: function(v) { return yFmt(v, true); }, font: { size: 11 } },
+           title: { display: !!yTitle, text: yTitle, font: { size: 11 }, color: '#8a9bb0' } }
+    }
+  };
+  if (extra) { extra(o); }
+  return o;
+}
+
+// ══════════════════════════════════════════════════════
+// MÓDULO GENÉRICO DE CURVA (usado por NTN-B, LTN e futuros títulos)
+//   cfg.key        prefixo dos ids
+//   cfg.nome       nome do título
+//   cfg.csvUrl     caminho do CSV
+//   cfg.parse      function(text) → { M: {metrica: {data: {venc: valor}}} }   (M.taxa obrigatório)
+//   cfg.curveMetrics [{key,label,unit,fmt}]  métricas disponíveis no gráfico de curva
+//   cfg.extraTabs  [{id,label,html,render(mod)}]
+// ══════════════════════════════════════════════════════
+function CurveModule(cfg) {
+  var P = cfg.key;
+  var mod = { cfg: cfg, M: {}, DB: {}, ALL_VENC: [], dates: [], selDates: [], tracked: [], charts: {}, active: cfg.defaultTab || 'dados', loaded: false };
+  function el(id) { return document.getElementById(P + '-' + id); }
+  mod.el = el;
+  mod.chart = function(name, canvasId, config) {
+    if (mod.charts[name]) { mod.charts[name].destroy(); }
+    mod.charts[name] = new Chart(el(canvasId), config);
+    return mod.charts[name];
+  };
+  mod.killChart = function(name) { if (mod.charts[name]) { mod.charts[name].destroy(); delete mod.charts[name]; } };
+
+  var metrics = cfg.curveMetrics || [{ key: 'taxa', label: 'Taxa', unit: '% a.a.', fmt: function(v) { return v.toFixed(2) + '%'; } }];
+  var tabs = [
+    { id: 'dados', label: 'Dados' },
+    { id: 'curva', label: 'Curva ' + cfg.nome },
+    { id: 'fwd',   label: 'Matriz de Forwards' },
+    { id: 'hist',  label: 'Evolu&ccedil;&atilde;o de Forwards' }
+  ].concat(cfg.extraTabs || []);
+  if (cfg.tabOrder) { tabs.sort(function(a, b) { return cfg.tabOrder.indexOf(a.id) - cfg.tabOrder.indexOf(b.id); }); }
+
+  // ── HTML ──
+  var h = '<div class="tabs">' + tabs.map(function(t) {
+    return '<button class="tab-btn' + (t.id === mod.active ? ' active' : '') + '" data-tab="' + t.id + '">' + t.label + '</button>';
+  }).join('') + '</div>';
+
+  h += '<div class="pane" id="' + P + '-pn-dados">' +
+    '<div class="card"><div class="lbl">Fonte de dados &mdash; GitHub</div><div class="gs-hint">' +
+      'Dados carregados automaticamente de <code>' + cfg.csvUrl + '</code> no reposit&oacute;rio.<br>' +
+      'Clique em <b>Atualizar dados</b> (barra superior) para recarregar ap&oacute;s novo commit.</div></div>' +
+    '<div class="card" id="' + P + '-statusCard" style="display:none"><div class="lbl">Status dos dados</div>' +
+      '<div style="margin-bottom:10px" id="' + P + '-statusBar"></div><div class="mrow" id="' + P + '-metricsRow"></div></div>' +
+    '<div class="card"><div class="lbl">Formato do arquivo</div><div class="formula">' + cfg.formatoHtml + '</div></div>' +
+  '</div>';
+
+  h += '<div class="pane" id="' + P + '-pn-curva">' +
+    '<div class="card"><div class="lbl">Datas para comparar</div><div class="date-tags" id="' + P + '-dtags"></div>' +
+      '<div class="add-row"><select id="' + P + '-dateSelect" style="min-width:180px"></select>' +
+      '<button class="btnp" id="' + P + '-btnAddDate">+ Adicionar data</button>' +
+      (metrics.length > 1 ? '<span style="flex:1"></span><label style="font-size:13px;color:#5a6a7a;font-weight:500">M&eacute;trica:</label><select id="' + P + '-curvaMetric">' +
+        metrics.map(function(m) { return '<option value="' + m.key + '">' + m.label + '</option>'; }).join('') + '</select>' : '') +
+      '</div></div>' +
+    '<div class="card"><div class="legend" id="' + P + '-curvaLeg"></div><div class="chart-wrap"><canvas id="' + P + '-curvaChart"></canvas></div>' +
+      '<div class="dev-hint" id="' + P + '-curvaHint" style="margin-top:8px"></div></div>' +
+  '</div>';
+
+  h += '<div class="pane" id="' + P + '-pn-fwd">' +
+    '<div class="card"><div class="ctrl-row" style="margin-bottom:12px"><label>Data de refer&ecirc;ncia:</label>' +
+      '<select id="' + P + '-fwdDate" style="min-width:180px"></select></div>' +
+      '<div class="info-box" id="' + P + '-fwdInfo">Carregue dados para ver a matriz.</div></div>' +
+    '<div class="card"><div class="lbl">Matriz de forwards (DU/252) &mdash; clique numa c&eacute;lula para acompanhar no tempo</div>' +
+      '<div class="mx-wrap"><div id="' + P + '-mxContainer"><div class="nodata"><span class="nd-icon">&#8862;</span>Carregue dados para ver a matriz</div></div></div></div>' +
+    '<div class="card"><div class="formula"><b>F&oacute;rmula DU/252:</b> ' +
+      'f(i&rarr;j) = [ (1+r<sub>j</sub>)<sup>du<sub>j</sub>/252</sup> / (1+r<sub>i</sub>)<sup>du<sub>i</sub>/252</sup> ]<sup>252/(du<sub>j</sub>&minus;du<sub>i</sub>)</sup> &minus; 1<br>' +
+      'du = dias &uacute;teis entre a data de refer&ecirc;ncia e o vencimento (calend&aacute;rio ANBIMA)<br>' +
+      'Na s&eacute;rie hist&oacute;rica, du<sub>i</sub> e du<sub>j</sub> s&atilde;o recalculados para cada data.' +
+      (cfg.fwdNote ? '<br>' + cfg.fwdNote : '') + '</div></div>' +
+  '</div>';
+
+  h += '<div class="pane" id="' + P + '-pn-hist">' +
+    '<div class="card"><div class="lbl">Forwards acompanhados</div>' +
+      '<div class="info-box">Clique nas c&eacute;lulas da matriz para adicionar, ou selecione manualmente abaixo.<br>' +
+      'Para cada data hist&oacute;rica, os DUs s&atilde;o recalculados a partir daquela data.</div>' +
+      '<div class="fwd-tags" id="' + P + '-fwdTags"></div>' +
+      '<div class="add-row"><label style="font-size:13px;color:#5a6a7a;font-weight:500">De:</label>' +
+      '<select id="' + P + '-histFrom" style="min-width:150px"></select>' +
+      '<label style="font-size:13px;color:#5a6a7a;font-weight:500">At&eacute;:</label>' +
+      '<select id="' + P + '-histTo" style="min-width:150px"></select>' +
+      '<button class="btnp" id="' + P + '-btnAddFwd">+ Adicionar</button></div></div>' +
+    '<div class="card"><div class="ctrl-row" style="margin-bottom:14px"><label>Per&iacute;odo:</label>' +
+      '<select id="' + P + '-histPeriod"><option value="0">Todo o hist&oacute;rico</option><option value="365">&Uacute;ltimo ano</option>' +
+      '<option value="180">&Uacute;ltimos 6 meses</option><option value="90">&Uacute;ltimos 3 meses</option><option value="30">&Uacute;ltimo m&ecirc;s</option></select></div>' +
+      '<div class="lbl" style="margin-bottom:8px">M&eacute;tricas adicionais</div><div class="metrics-box">' +
+        '<label class="metric-chk"><input type="checkbox" id="' + P + '-chk-sd1"><span style="color:#D85A30;font-weight:500">&plusmn;1&sigma; (21 dias)</span></label>' +
+        '<label class="metric-chk"><input type="checkbox" id="' + P + '-chk-sd2"><span style="color:#9b3010;font-weight:500">&plusmn;2&sigma; (21 dias)</span></label>' +
+        '<div class="metric-sep"></div>' +
+        '<label class="metric-chk"><input type="checkbox" id="' + P + '-chk-mm21"><span style="color:#1D9E75;font-weight:500">MM 21 dias</span></label>' +
+        '<label class="metric-chk"><input type="checkbox" id="' + P + '-chk-mm42"><span style="color:#7F77DD;font-weight:500">MM 42 dias</span></label>' +
+        '<label class="metric-chk"><input type="checkbox" id="' + P + '-chk-mm63"><span style="color:#BA7517;font-weight:500">MM 63 dias</span></label>' +
+      '</div>' +
+      '<div class="legend" id="' + P + '-histLeg" style="margin-top:16px"></div>' +
+      '<div class="chart-wrap" style="height:360px;margin-top:6px"><canvas id="' + P + '-histChart"></canvas></div>' +
+      '<div id="' + P + '-devSection" style="display:none"><div class="dev-lbl" style="margin-top:20px">Desvio em rela&ccedil;&atilde;o &agrave; m&eacute;dia m&oacute;vel selecionada (bps)</div>' +
+        '<div class="dev-hint" id="' + P + '-devHint"></div><div class="chart-wrap-sm"><canvas id="' + P + '-devChart"></canvas></div></div>' +
+    '</div></div>';
+
+  (cfg.extraTabs || []).forEach(function(t) {
+    h += '<div class="pane" id="' + P + '-pn-' + t.id + '">' + t.html.replace(/\{P\}/g, P) + '</div>';
+  });
+
+  var root = document.getElementById(cfg.root);
+  root.innerHTML = h;
+  el('pn-' + mod.active).classList.add('active');
+
+  // ── Navegação ──
+  mod.showTab = function(id) {
+    mod.active = id;
+    root.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.toggle('active', b.getAttribute('data-tab') === id); });
+    root.querySelectorAll('.pane').forEach(function(p) { p.classList.toggle('active', p.id === P + '-pn-' + id); });
+    mod.renderActive();
+  };
+  mod.renderActive = function() {
+    if (!mod.loaded) { return; }
+    var id = mod.active;
+    if (id === 'curva') { renderCurva(); }
+    else if (id === 'fwd') { renderForward(); }
+    else if (id === 'hist') { populateHistSelects(); renderHist(); }
+    else {
+      (cfg.extraTabs || []).forEach(function(t) { if (t.id === id && t.render) { t.render(mod); } });
+    }
+  };
+  root.querySelectorAll('.tab-btn').forEach(function(b) {
+    b.addEventListener('click', function() { mod.showTab(this.getAttribute('data-tab')); });
+  });
+
+  el('btnAddDate').addEventListener('click', addDate);
+  if (el('curvaMetric')) { el('curvaMetric').addEventListener('change', renderCurva); }
+  el('fwdDate').addEventListener('change', renderForward);
+  el('btnAddFwd').addEventListener('click', addFwdFromSelects);
+  el('histPeriod').addEventListener('change', renderHist);
+  ['chk-sd1','chk-sd2','chk-mm21','chk-mm42','chk-mm63'].forEach(function(id) { el(id).addEventListener('change', renderHist); });
+
+  // ── Dados ──
+  function getVencDU(venc, refISO) {
+    var du = countDU(refISO, venc);
+    return (du !== null && du > 0) ? du : null;
+  }
+  mod.getVencDU = getVencDU;
+  function activeVenc(date) {
+    var row = mod.DB[date]; if (!row) { return []; }
+    return mod.ALL_VENC.filter(function(v) { return row[v] !== undefined && getVencDU(v, date) !== null; });
+  }
+  mod.activeVenc = activeVenc;
+  function getFwdValue(date, from, to) {
+    var row = mod.DB[date];
+    if (!row || row[from] === undefined || row[to] === undefined) { return null; }
+    return calcFwdDU(row[from], row[to], getVencDU(from, date), getVencDU(to, date));
+  }
+
+  mod.load = function() {
+    return fetch(cfg.csvUrl + '?t=' + Date.now())
+      .then(function(r) { if (!r.ok) { throw new Error('HTTP ' + r.status + ' em ' + cfg.csvUrl); } return r.text(); })
+      .then(function(text) {
+        var res = cfg.parse(text);
+        mod.M = res.M; mod.DB = res.M.taxa || {};
+        var vs = {};
+        Object.keys(mod.DB).forEach(function(d) { Object.keys(mod.DB[d]).forEach(function(v) { vs[v] = true; }); });
+        mod.ALL_VENC = Object.keys(vs).sort();
+        mod.dates = Object.keys(mod.DB).sort();
+        if (!mod.dates.length || !mod.ALL_VENC.length) { throw new Error('Nenhuma data/vencimento válido em ' + cfg.csvUrl); }
+        buildDUIndex(mod.ALL_VENC[mod.ALL_VENC.length - 1]);
+        finishLoad();
+      })
+      .catch(function(err) {
+        el('statusCard').style.display = 'block';
+        el('statusBar').innerHTML = '<span class="sbadge sbadge-err">&#10005; Erro ao carregar</span> ' + err.message;
+        throw err;
+      });
+  };
+
+  function finishLoad() {
+    var dates = mod.dates;
+    el('statusCard').style.display = 'block';
+    el('statusBar').innerHTML = '<span class="sbadge">&#10003; Dados carregados</span> &nbsp;' +
+      dates.length + ' datas &middot; ' + mod.ALL_VENC.length + ' vencimentos &middot; ' + fmt(dates[0]) + ' a ' + fmt(dates[dates.length - 1]);
+    var mets = [['Datas', dates.length], ['Vencimentos', mod.ALL_VENC.length], ['In&iacute;cio', fmt(dates[0])], ['Fim', fmt(dates[dates.length - 1])]];
+    if (cfg.extraStatus) { mets = mets.concat(cfg.extraStatus(mod)); }
+    el('metricsRow').innerHTML = mets.map(function(m) {
+      return '<div class="met"><div class="met-lbl">' + m[0] + '</div><div class="met-val">' + m[1] + '</div></div>';
     }).join('');
-  });
-}
 
-// ══════════════════════════════════════════════════════
-// EVOLUÇÃO DE FORWARDS
-// ══════════════════════════════════════════════════════
-function renderHist() {
-  updateFwdTags();
-  if (!Object.keys(DB).length || !trackedFwds.length) {
-    if (histInst) { histInst.destroy(); histInst = null; }
-    if (devInst)  { devInst.destroy();  devInst  = null; }
-    return;
+    if (!mod.loaded) {
+      mod.selDates = [dates[dates.length - 1]];
+      if (dates.length > 60) { mod.selDates.push(dates[dates.length - 61]); }
+      mod.tracked = [];
+    } else {
+      mod.selDates = mod.selDates.filter(function(d) { return mod.DB[d]; });
+      if (!mod.selDates.length) { mod.selDates = [dates[dates.length - 1]]; }
+    }
+    var opts = dates.slice().reverse().map(function(d) { return '<option value="' + d + '">' + fmt(d) + '</option>'; }).join('');
+    var curFwd = el('fwdDate').value;
+    el('dateSelect').innerHTML = opts;
+    el('fwdDate').innerHTML = opts;
+    if (curFwd && mod.DB[curFwd]) { el('fwdDate').value = curFwd; }
+    mod.loaded = true;
+    if (cfg.onLoad) { cfg.onLoad(mod); }
+    populateHistSelects(); updateTags(); updateFwdTags();
+    mod.renderActive();
   }
 
-  var showSD1  = document.getElementById('chk-sd1').checked;
-  var showSD2  = document.getElementById('chk-sd2').checked;
-  var showMM21 = document.getElementById('chk-mm21').checked;
-  var showMM42 = document.getElementById('chk-mm42').checked;
-  var showMM63 = document.getElementById('chk-mm63').checked;
-
-  // MM de referência para o gráfico de desvio (menor janela ativa)
-  var refMMWindow = 0, refMMLabel = '';
-  if      (showMM21) { refMMWindow = 21; refMMLabel = 'MM 21 dias'; }
-  else if (showMM42) { refMMWindow = 42; refMMLabel = 'MM 42 dias'; }
-  else if (showMM63) { refMMWindow = 63; refMMLabel = 'MM 63 dias'; }
-
-  var periodDays = parseInt(document.getElementById('histPeriod').value) || 0;
-  var allDates   = Object.keys(DB).sort();
-  var dates      = allDates;
-  if (periodDays) {
-    var cutoff = new Date(); cutoff.setDate(cutoff.getDate() - periodDays);
-    var cutStr = cutoff.toISOString().slice(0, 10);
-    dates = allDates.filter(function(d) { return d >= cutStr; });
+  // ── Curva ──
+  function addDate() {
+    var v = el('dateSelect').value;
+    if (!v || !mod.DB[v] || mod.selDates.indexOf(v) >= 0) { return; }
+    mod.selDates.push(v); updateTags(); renderCurva();
   }
-
-  // Subsampling
-  var step = Math.max(1, Math.ceil(dates.length / 300));
-  var lbls = dates.filter(function(_, i) { return i % step === 0 || i === dates.length - 1; }).map(fmt);
-
-  function sub(arr) {
-    if (!arr) { return null; }
-    return dates
-      .map(function(_, i) { return i; })
-      .filter(function(i) { return i % step === 0 || i === dates.length - 1; })
-      .map(function(i) { return arr[i] !== undefined ? arr[i] : null; });
+  function removeDate(d) {
+    mod.selDates = mod.selDates.filter(function(x) { return x !== d; });
+    updateTags(); renderCurva();
   }
-
-  var datasets = [], devDatasets = [], legItems = [];
-  var legMMAdded = { mm21: false, mm42: false, mm63: false, sd1: false, sd2: false };
-
-  trackedFwds.forEach(function(t) {
-    var lbl = fmt(VENC_ISO[t.from]) + ' \u2192 ' + fmt(VENC_ISO[t.to]);
-
-    var mainData = dates.map(function(date) {
-      var v = getFwdValue(date, t.from, t.to);
-      return v !== null ? parseFloat(v.toFixed(4)) : null;
+  function updateTags() {
+    var c = el('dtags');
+    c.innerHTML = mod.selDates.map(function(d) {
+      return '<div class="dtag"><span>' + fmt(d) + '</span><button data-d="' + d + '">&times;</button></div>';
+    }).join('');
+    c.querySelectorAll('button').forEach(function(btn) {
+      btn.addEventListener('click', function() { removeDate(this.getAttribute('data-d')); });
     });
-
-    var needMM21 = showMM21 || refMMWindow === 21;
-    var needMM42 = showMM42 || refMMWindow === 42;
-    var needMM63 = showMM63 || refMMWindow === 63;
-    var mm21Data = needMM21 ? movingAvg(mainData, 21) : null;
-    var mm42Data = needMM42 ? movingAvg(mainData, 42) : null;
-    var mm63Data = needMM63 ? movingAvg(mainData, 63) : null;
-    var sd1Bands = showSD1  ? movingStdBands(mainData, 21, 1) : null;
-    var sd2Bands = showSD2  ? movingStdBands(mainData, 21, 2) : null;
-
-    var refMM = refMMWindow === 21 ? mm21Data : refMMWindow === 42 ? mm42Data : refMMWindow === 63 ? mm63Data : null;
-
-    // Série principal
-    datasets.push({
-      label: lbl, data: sub(mainData),
-      borderColor: t.color, backgroundColor: 'transparent',
-      borderWidth: 2, pointRadius: 0, pointHoverRadius: 4, tension: 0.2, spanGaps: false, order: 1
+  }
+  function renderCurva() {
+    if (!mod.loaded || !mod.selDates.length) { mod.killChart('curva'); return; }
+    var mKey = el('curvaMetric') ? el('curvaMetric').value : 'taxa';
+    var mDef = metrics.filter(function(m) { return m.key === mKey; })[0] || metrics[0];
+    var store = mod.M[mDef.key] || {};
+    var activeSet = {};
+    mod.selDates.forEach(function(d) { activeVenc(d).forEach(function(v) { activeSet[v] = true; }); });
+    var labels = mod.ALL_VENC.filter(function(v) { return activeSet[v]; });
+    var semDado = [];
+    var datasets = mod.selDates.map(function(date, di) {
+      var row = store[date] || {}, av = {};
+      activeVenc(date).forEach(function(v) { av[v] = true; });
+      var data = labels.map(function(v) { return (av[v] && row[v] !== undefined) ? row[v] : null; });
+      if (!data.some(function(x) { return x !== null; })) { semDado.push(fmt(date)); }
+      return {
+        label: fmt(date), data: data,
+        borderColor: COLORS[di % COLORS.length], backgroundColor: 'transparent',
+        borderWidth: 2, pointRadius: 4, pointHoverRadius: 6, tension: 0.3,
+        borderDash: DASHES[di % DASHES.length], spanGaps: false
+      };
     });
-    legItems.push('<div class="li"><div class="ld" style="background:' + t.color + '"></div><span>' + lbl + '</span></div>');
+    el('curvaLeg').innerHTML = mod.selDates.map(function(d, di) {
+      return '<div class="li"><div class="ld" style="background:' + COLORS[di % COLORS.length] + '"></div><span>' + fmt(d) + '</span></div>';
+    }).join('');
+    el('curvaHint').textContent = semDado.length ? ('Sem ' + mDef.label.toLowerCase() + ' disponível em: ' + semDado.join(', ') + (mDef.semDadoHint ? ' — ' + mDef.semDadoHint : '')) : '';
+    mod.chart('curva', 'curvaChart', {
+      type: 'line',
+      data: { labels: labels.map(fmt), datasets: datasets },
+      options: lineOptions(function(v, axis) { return mDef.fmt(v, axis); }, mDef.unit, function(o) { o.scales.x.ticks.maxTicksLimit = 16; })
+    });
+  }
 
-    // MMs
-    if (showMM21 && mm21Data) {
-      datasets.push({ label: 'MM21 ' + lbl, data: sub(mm21Data), borderColor: C_MM21, backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [6,3], pointRadius: 0, tension: 0.2, spanGaps: false, order: 2 });
-      if (!legMMAdded.mm21) { legItems.push('<div class="li"><div class="ld-dash" style="border-color:' + C_MM21 + '"></div><span>MM 21 dias</span></div>'); legMMAdded.mm21 = true; }
+  // ── Matriz de forwards ──
+  function renderForward() {
+    var sel = el('fwdDate');
+    var date = sel.value || (sel.options[0] && sel.options[0].value);
+    if (date && sel.value !== date) { sel.value = date; }
+    var info = el('fwdInfo'), container = el('mxContainer');
+    if (!date || !mod.DB[date]) {
+      info.textContent = 'Carregue dados para ver a matriz.';
+      container.innerHTML = '<div class="nodata"><span class="nd-icon">&#8862;</span>Carregue dados para ver a matriz</div>';
+      return;
     }
-    if (showMM42 && mm42Data) {
-      datasets.push({ label: 'MM42 ' + lbl, data: sub(mm42Data), borderColor: C_MM42, backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [6,3], pointRadius: 0, tension: 0.2, spanGaps: false, order: 2 });
-      if (!legMMAdded.mm42) { legItems.push('<div class="li"><div class="ld-dash" style="border-color:' + C_MM42 + '"></div><span>MM 42 dias</span></div>'); legMMAdded.mm42 = true; }
-    }
-    if (showMM63 && mm63Data) {
-      datasets.push({ label: 'MM63 ' + lbl, data: sub(mm63Data), borderColor: C_MM63, backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [6,3], pointRadius: 0, tension: 0.2, spanGaps: false, order: 2 });
-      if (!legMMAdded.mm63) { legItems.push('<div class="li"><div class="ld-dash" style="border-color:' + C_MM63 + '"></div><span>MM 63 dias</span></div>'); legMMAdded.mm63 = true; }
-    }
-
-    // ±1σ
-    if (showSD1 && sd1Bands) {
-      datasets.push({ label: '+1\u03c3 ' + lbl, data: sub(sd1Bands.upper), borderColor: C_SD1, backgroundColor: 'transparent', borderWidth: 1, borderDash: [3,3], pointRadius: 0, tension: 0.2, spanGaps: false, order: 3 });
-      datasets.push({ label: '-1\u03c3 ' + lbl, data: sub(sd1Bands.lower), borderColor: C_SD1, backgroundColor: hexA(C_SD1, 0.08), borderWidth: 1, borderDash: [3,3], pointRadius: 0, tension: 0.2, spanGaps: false, fill: '-1', order: 3 });
-      if (!legMMAdded.sd1) { legItems.push('<div class="li"><div class="ld-dash" style="border-color:' + C_SD1 + '"></div><span>&plusmn;1&sigma; (21d)</span></div>'); legMMAdded.sd1 = true; }
-    }
-
-    // ±2σ
-    if (showSD2 && sd2Bands) {
-      datasets.push({ label: '+2\u03c3 ' + lbl, data: sub(sd2Bands.upper), borderColor: C_SD2, backgroundColor: 'transparent', borderWidth: 1, borderDash: [4,2], pointRadius: 0, tension: 0.2, spanGaps: false, order: 3 });
-      datasets.push({ label: '-2\u03c3 ' + lbl, data: sub(sd2Bands.lower), borderColor: C_SD2, backgroundColor: hexA(C_SD2, 0.05), borderWidth: 1, borderDash: [4,2], pointRadius: 0, tension: 0.2, spanGaps: false, fill: '-1', order: 3 });
-      if (!legMMAdded.sd2) { legItems.push('<div class="li"><div class="ld-dash" style="border-color:' + C_SD2 + '"></div><span>&plusmn;2&sigma; (21d)</span></div>'); legMMAdded.sd2 = true; }
-    }
-
-    // Gráfico de desvio
-    if (refMMWindow > 0 && refMM) {
-      var devData = calcDeviation(mainData, refMM);
-      var devSub  = sub(devData);
-      var bgColors = devSub.map(function(v) { return v !== null && v >= 0 ? hexA(t.color, 0.7) : hexA('#D85A30', 0.7); });
-      devDatasets.push({ label: lbl, data: devSub, borderColor: 'transparent', backgroundColor: bgColors, borderWidth: 0, pointRadius: 0, type: 'bar', barPercentage: 1.0, categoryPercentage: 1.0, order: 1 });
-    }
-  });
-
-  document.getElementById('histLeg').innerHTML = legItems.join('');
-
-  if (histInst) { histInst.destroy(); histInst = null; }
-  histInst = new Chart(document.getElementById('histChart'), {
-    type: 'line', data: { labels: lbls, datasets: datasets },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: { legend: { display: false }, tooltip: { callbacks: {
-        label:  function(c) { return c.parsed.y != null ? c.dataset.label + ': ' + c.parsed.y.toFixed(2) + '% a.a.' : null; },
-        filter: function(i) { return i.parsed.y != null; }
-      }}},
-      scales: {
-        x: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { maxRotation: 35, font: { size: 10 }, maxTicksLimit: 14 } },
-        y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { callback: function(v) { return v.toFixed(2) + '%'; }, font: { size: 11 } },
-             title: { display: true, text: '% a.a.', font: { size: 11 }, color: '#8a9bb0' } }
+    var venc = activeVenc(date);
+    var rates = venc.map(function(v) { return mod.DB[date][v]; });
+    var dus = venc.map(function(v) { return getVencDU(v, date); });
+    info.textContent = 'Data: ' + fmt(date) + ' · ' + venc.length + ' vencimentos ativos · DU/252 · Clique numa célula para acompanhar';
+    if (venc.length < 2) { container.innerHTML = '<div class="nodata"><span class="nd-icon">&#8862;</span>Menos de 2 vencimentos nesta data</div>'; return; }
+    var allFwd = [], matrix = [], i, j;
+    for (i = 0; i < venc.length; i++) {
+      matrix[i] = [];
+      for (j = 0; j < venc.length; j++) {
+        if (i >= j) { matrix[i][j] = null; continue; }
+        var f = calcFwdDU(rates[i], rates[j], dus[i], dus[j]);
+        matrix[i][j] = f; if (f !== null) { allFwd.push(f); }
       }
     }
-  });
-
-  var devSection = document.getElementById('devSection');
-  if (refMMWindow > 0 && devDatasets.length > 0) {
-    devSection.style.display = 'block';
-    document.getElementById('devHint').textContent = 'Forward \u2212 ' + refMMLabel + ' (bps). Positivo = forward acima da média, negativo = abaixo.';
-    if (devInst) { devInst.destroy(); devInst = null; }
-    devInst = new Chart(document.getElementById('devChart'), {
-      type: 'bar', data: { labels: lbls, datasets: devDatasets },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        interaction: { mode: 'index', intersect: false },
-        plugins: { legend: { display: false }, tooltip: { callbacks: {
-          label:  function(c) { return c.parsed.y != null ? c.dataset.label + ': ' + c.parsed.y.toFixed(1) + ' bps' : null; },
-          filter: function(i) { return i.parsed.y != null; }
-        }}},
-        scales: {
-          x: { grid: { display: false }, ticks: { maxRotation: 35, font: { size: 9 }, maxTicksLimit: 14 } },
-          y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { callback: function(v) { return v + ' bps'; }, font: { size: 10 } },
-               title: { display: true, text: 'bps', font: { size: 10 }, color: '#8a9bb0' } }
+    if (!allFwd.length) { container.innerHTML = '<div class="nodata">Nenhum forward calculado.</div>'; return; }
+    var maxF = Math.max.apply(null, allFwd), minF = Math.min.apply(null, allFwd), rng = maxF - minF || 1;
+    function cc(v) { var n = (v - minF) / rng; return n > 0.66 ? 'ch' : n > 0.33 ? 'cm' : 'cl'; }
+    var html = '<table class="mx"><thead><tr><th>&#8595; De / At&eacute; &#8594;</th>';
+    venc.forEach(function(v, j) {
+      html += '<th>' + fmt(v) + '<br><span style="font-weight:400;font-size:9px;color:#8a9bb0">' + dus[j] + ' DU</span></th>';
+    });
+    html += '</tr></thead><tbody>';
+    venc.forEach(function(vi, i) {
+      html += '<tr><td class="rl">' + fmt(vi) + '<br><span style="font-weight:400;font-size:10px;color:#8a9bb0">' + rates[i].toFixed(2) + '% &middot; ' + dus[i] + ' DU</span></td>';
+      venc.forEach(function(vj, j) {
+        if (i === j) { html += '<td class="cd">&mdash;</td>'; }
+        else if (i > j) { html += '<td class="cn">&middot;</td>'; }
+        else {
+          var v2 = matrix[i][j]; if (v2 === null) { html += '<td class="cn">&mdash;</td>'; return; }
+          var isTk = mod.tracked.some(function(t) { return t.from === vi && t.to === vj; });
+          html += '<td class="' + cc(v2) + (isTk ? ' tracked' : '') + '" data-from="' + vi + '" data-to="' + vj + '">' + v2.toFixed(2) + '%</td>';
         }
+      });
+      html += '</tr>';
+    });
+    container.innerHTML = html + '</tbody></table>';
+    container.querySelectorAll('td[data-from]').forEach(function(td) {
+      td.addEventListener('click', function() { addTrackedFwd(this.getAttribute('data-from'), this.getAttribute('data-to')); });
+    });
+  }
+
+  // ── Forwards acompanhados ──
+  function addTrackedFwd(from, to) {
+    if (!from || !to || from === to) { return; }
+    if (from > to) { var t0 = from; from = to; to = t0; }
+    if (!mod.tracked.some(function(t) { return t.from === from && t.to === to; })) {
+      mod.tracked.push({ from: from, to: to, color: COLORS[mod.tracked.length % COLORS.length] });
+    }
+    updateFwdTags();
+    mod.showTab('hist');
+  }
+  function removeTrackedFwd(idx) {
+    mod.tracked.splice(idx, 1);
+    mod.tracked.forEach(function(t, i) { t.color = COLORS[i % COLORS.length]; });
+    updateFwdTags(); renderHist();
+  }
+  function updateFwdTags() {
+    var c = el('fwdTags');
+    if (!mod.tracked.length) { c.innerHTML = '<span style="font-size:13px;color:#8a9bb0">Nenhum forward selecionado ainda.</span>'; return; }
+    c.innerHTML = mod.tracked.map(function(t, i) {
+      return '<div class="ftag" style="background:' + hexA(t.color, 0.08) + ';border-color:' + t.color + ';color:' + t.color + '">' +
+        fmt(t.from) + ' &rarr; ' + fmt(t.to) + '<button data-i="' + i + '" style="color:' + t.color + '">&times;</button></div>';
+    }).join('');
+    c.querySelectorAll('button').forEach(function(btn) {
+      btn.addEventListener('click', function() { removeTrackedFwd(parseInt(this.getAttribute('data-i'), 10)); });
+    });
+  }
+  function addFwdFromSelects() {
+    var from = el('histFrom').value, to = el('histTo').value;
+    if (!from || !to || from === to) { alert('Selecione dois vencimentos diferentes.'); return; }
+    addTrackedFwd(from, to);
+  }
+  function populateHistSelects() {
+    var ativos = mod.dates.length ? activeVenc(mod.dates[mod.dates.length - 1]) : [];
+    ['histFrom','histTo'].forEach(function(id, k) {
+      var sel = el(id), cur = sel.value || ativos[Math.min(k, ativos.length - 1)] || '';
+      sel.innerHTML = mod.ALL_VENC.map(function(v) {
+        return '<option value="' + v + '"' + (v === cur ? ' selected' : '') + '>' + fmt(v) + '</option>';
+      }).join('');
+    });
+  }
+
+  // ── Evolução de forwards ──
+  function renderHist() {
+    updateFwdTags();
+    if (!mod.loaded || !mod.tracked.length) {
+      mod.killChart('hist'); mod.killChart('dev');
+      el('histLeg').innerHTML = ''; el('devSection').style.display = 'none';
+      return;
+    }
+    var showSD1 = el('chk-sd1').checked, showSD2 = el('chk-sd2').checked;
+    var showMM21 = el('chk-mm21').checked, showMM42 = el('chk-mm42').checked, showMM63 = el('chk-mm63').checked;
+    var refMMWindow = 0, refMMLabel = '';
+    if (showMM21) { refMMWindow = 21; refMMLabel = 'MM 21 dias'; }
+    else if (showMM42) { refMMWindow = 42; refMMLabel = 'MM 42 dias'; }
+    else if (showMM63) { refMMWindow = 63; refMMLabel = 'MM 63 dias'; }
+
+    var dates = periodFilter(mod.dates, parseInt(el('histPeriod').value, 10) || 0);
+    var keep = subsample(dates.length, 300);
+    var lbls = keep.map(function(i) { return fmt(dates[i]); });
+    function sub(arr) { return arr ? keep.map(function(i) { return arr[i] !== undefined ? arr[i] : null; }) : null; }
+
+    var datasets = [], devDatasets = [], legItems = [];
+    var legAdded = {};
+    function legOnce(k, html) { if (!legAdded[k]) { legItems.push(html); legAdded[k] = true; } }
+
+    mod.tracked.forEach(function(t) {
+      var lbl = fmt(t.from) + ' → ' + fmt(t.to);
+      var mainData = dates.map(function(date) { var v = getFwdValue(date, t.from, t.to); return v !== null ? parseFloat(v.toFixed(4)) : null; });
+      var mm21 = (showMM21 || refMMWindow === 21) ? movingAvg(mainData, 21) : null;
+      var mm42 = (showMM42 || refMMWindow === 42) ? movingAvg(mainData, 42) : null;
+      var mm63 = (showMM63 || refMMWindow === 63) ? movingAvg(mainData, 63) : null;
+      var sd1 = showSD1 ? movingStdBands(mainData, 21, 1) : null;
+      var sd2 = showSD2 ? movingStdBands(mainData, 21, 2) : null;
+      var refMM = refMMWindow === 21 ? mm21 : refMMWindow === 42 ? mm42 : refMMWindow === 63 ? mm63 : null;
+
+      datasets.push({ label: lbl, data: sub(mainData), borderColor: t.color, backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, pointHoverRadius: 4, tension: 0.2, spanGaps: false, order: 1 });
+      legItems.push('<div class="li"><div class="ld" style="background:' + t.color + '"></div><span>' + lbl + '</span></div>');
+
+      [[showMM21, mm21, C_MM21, 'MM21', 'MM 21 dias'], [showMM42, mm42, C_MM42, 'MM42', 'MM 42 dias'], [showMM63, mm63, C_MM63, 'MM63', 'MM 63 dias']].forEach(function(x) {
+        if (x[0] && x[1]) {
+          datasets.push({ label: x[3] + ' ' + lbl, data: sub(x[1]), borderColor: x[2], backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [6,3], pointRadius: 0, tension: 0.2, spanGaps: false, order: 2 });
+          legOnce(x[3], '<div class="li"><div class="ld-dash" style="border-color:' + x[2] + '"></div><span>' + x[4] + '</span></div>');
+        }
+      });
+      if (sd1) {
+        datasets.push({ label: '+1σ ' + lbl, data: sub(sd1.upper), borderColor: C_SD1, backgroundColor: 'transparent', borderWidth: 1, borderDash: [3,3], pointRadius: 0, tension: 0.2, spanGaps: false, order: 3 });
+        datasets.push({ label: '-1σ ' + lbl, data: sub(sd1.lower), borderColor: C_SD1, backgroundColor: hexA(C_SD1, 0.08), borderWidth: 1, borderDash: [3,3], pointRadius: 0, tension: 0.2, spanGaps: false, fill: '-1', order: 3 });
+        legOnce('sd1', '<div class="li"><div class="ld-dash" style="border-color:' + C_SD1 + '"></div><span>&plusmn;1&sigma; (21d)</span></div>');
+      }
+      if (sd2) {
+        datasets.push({ label: '+2σ ' + lbl, data: sub(sd2.upper), borderColor: C_SD2, backgroundColor: 'transparent', borderWidth: 1, borderDash: [4,2], pointRadius: 0, tension: 0.2, spanGaps: false, order: 3 });
+        datasets.push({ label: '-2σ ' + lbl, data: sub(sd2.lower), borderColor: C_SD2, backgroundColor: hexA(C_SD2, 0.05), borderWidth: 1, borderDash: [4,2], pointRadius: 0, tension: 0.2, spanGaps: false, fill: '-1', order: 3 });
+        legOnce('sd2', '<div class="li"><div class="ld-dash" style="border-color:' + C_SD2 + '"></div><span>&plusmn;2&sigma; (21d)</span></div>');
+      }
+      if (refMM) {
+        var devSub = sub(calcDeviation(mainData, refMM));
+        devDatasets.push({ label: lbl, data: devSub, borderColor: 'transparent',
+          backgroundColor: devSub.map(function(v) { return v !== null && v >= 0 ? hexA(t.color, 0.7) : hexA('#D85A30', 0.7); }),
+          borderWidth: 0, type: 'bar', barPercentage: 1.0, categoryPercentage: 1.0, order: 1 });
       }
     });
-  } else {
-    devSection.style.display = 'none';
-    if (devInst) { devInst.destroy(); devInst = null; }
+
+    el('histLeg').innerHTML = legItems.join('');
+    mod.chart('hist', 'histChart', { type: 'line', data: { labels: lbls, datasets: datasets },
+      options: lineOptions(function(v, axis) { return axis ? v.toFixed(2) + '%' : v.toFixed(2) + '% a.a.'; }, '% a.a.') });
+
+    if (refMMWindow > 0 && devDatasets.length) {
+      el('devSection').style.display = 'block';
+      el('devHint').textContent = 'Forward − ' + refMMLabel + ' (bps). Positivo = forward acima da média, negativo = abaixo.';
+      mod.chart('dev', 'devChart', { type: 'bar', data: { labels: lbls, datasets: devDatasets },
+        options: lineOptions(function(v, axis) { return axis ? v + ' bps' : v.toFixed(1) + ' bps'; }, 'bps', function(o) {
+          o.scales.x.grid = { display: false }; o.scales.x.ticks.font = { size: 9 };
+        }) });
+    } else {
+      el('devSection').style.display = 'none';
+      mod.killChart('dev');
+    }
   }
+
+  return mod;
 }
 
-// Carrega automaticamente ao abrir
-window.addEventListener('load', function() { loadData(); });
+// ══════════════════════════════════════════════════════
+// PARSERS
+// ══════════════════════════════════════════════════════
+// Formato largo (NTN-B): data_referencia, venc1, venc2, ... → taxa
+function parseWide(text) {
+  var lines = text.split(/\r?\n/).filter(function(l) { return l.trim() !== ''; });
+  if (lines.length < 2) { throw new Error('CSV vazio'); }
+  var header = parseLine(lines[0]);
+  var vencIso = header.slice(1).map(toDateISO);
+  var taxa = {};
+  for (var r = 1; r < lines.length; r++) {
+    var row = parseLine(lines[r]), d = toDateISO(row[0]);
+    if (!d) { continue; }
+    var o = {};
+    vencIso.forEach(function(v, i) {
+      if (!v) { return; }
+      var n = toNum(row[i + 1]);
+      if (n !== null && n > 0 && n < 100) { o[v] = n; }
+    });
+    taxa[d] = o;
+  }
+  return { M: { taxa: taxa } };
+}
+
+// Formato longo (LTN): data_referencia, data_vencimento, métrica1, métrica2, ...
+var LTN_COLS = { taxa: 'taxa_pct_aa', pu: 'pu', du: 'du', duration: 'duration_du', duration_mod: 'duration_mod',
+                 taxa_di: 'taxa_di', casada: 'casada_bps', pct_cdi: 'pct_cdi' };
+function parseLong(text) {
+  var lines = text.split(/\r?\n/).filter(function(l) { return l.trim() !== ''; });
+  if (lines.length < 2) { throw new Error('CSV vazio'); }
+  var header = parseLine(lines[0]), ix = {};
+  header.forEach(function(h, i) { ix[h] = i; });
+  if (ix.data_referencia === undefined || ix.data_vencimento === undefined) { throw new Error('CSV sem colunas data_referencia/data_vencimento'); }
+  var M = {};
+  Object.keys(LTN_COLS).forEach(function(k) { M[k] = {}; });
+  for (var r = 1; r < lines.length; r++) {
+    var row = parseLine(lines[r]);
+    var d = toDateISO(row[ix.data_referencia]), v = toDateISO(row[ix.data_vencimento]);
+    if (!d || !v) { continue; }
+    Object.keys(LTN_COLS).forEach(function(k) {
+      var c = ix[LTN_COLS[k]]; if (c === undefined) { return; }
+      var n = toNum(row[c]);
+      if (n === null) { return; }
+      if (k === 'taxa' && !(n > 0 && n < 100)) { return; }
+      (M[k][d] = M[k][d] || {})[v] = n;
+    });
+  }
+  return { M: M };
+}
+
+// ══════════════════════════════════════════════════════
+// NTN-B
+// ══════════════════════════════════════════════════════
+var NTNB = CurveModule({
+  key: 'ntnb', nome: 'NTN-B', root: 'mp-ntnb', csvUrl: 'dados/ntnb_export.csv', parse: parseWide,
+  formatoHtml: '<b>Coluna A:</b> data_referencia em formato AAAA-MM-DD<br>' +
+               '<b>Colunas B+:</b> cabe&ccedil;alho = data de vencimento do papel (AAAA-MM-DD ou DD/MM/AAAA)<br>' +
+               '<b>Valores:</b> taxa indicativa ANBIMA em % a.a. &middot; C&eacute;lulas vazias = papel n&atilde;o existia naquela data'
+});
+
+// ══════════════════════════════════════════════════════
+// LTN — abas extras
+// ══════════════════════════════════════════════════════
+var N_DIAS = 5;
+var RAMP = ['#c6dbef', '#9ecae1', '#6baed6', '#3182bd', '#0d1b2a'];   // D-4 (claro) → D0 (escuro)
+var LTN_METRICS = {
+  taxa:    { key: 'taxa',    label: 'Taxa',    unit: '% a.a.', fmt: function(v, ax) { return ax ? v.toFixed(2) + '%' : v.toFixed(2) + '% a.a.'; }, dec: 4, deltaUnit: 'bps', deltaMult: 100 },
+  casada:  { key: 'casada',  label: 'Casada',  unit: 'bps',    fmt: function(v, ax) { return ax ? v.toFixed(0) : v.toFixed(1) + ' bps'; }, dec: 1, deltaUnit: 'bps', deltaMult: 1,
+             semDadoHint: 'DI1 da B3 disponível a partir de fev/2025' },
+  pct_cdi: { key: 'pct_cdi', label: '% do CDI', unit: '% CDI', fmt: function(v, ax) { return ax ? v.toFixed(1) + '%' : v.toFixed(2) + '% CDI'; }, dec: 2, deltaUnit: 'p.p.', deltaMult: 1,
+             semDadoHint: 'DI1 da B3 disponível a partir de fev/2025' }
+};
+function lastDatesWith(mod, key, n) {
+  var store = mod.M[key] || {}, out = [];
+  for (var i = mod.dates.length - 1; i >= 0 && out.length < n; i--) {
+    var d = mod.dates[i];
+    if (store[d] && Object.keys(store[d]).length) { out.unshift(d); }
+  }
+  return out;
+}
+function fmtDelta(x, unit) {
+  if (x === null || isNaN(x)) { return '<span class="nz">&ndash;</span>'; }
+  var cls = Math.abs(x) < 0.005 ? 'nz' : (x > 0 ? 'up' : 'dn');
+  return '<span class="' + cls + '">' + (x > 0 ? '+' : '') + x.toFixed(unit === 'p.p.' ? 2 : 1) + '</span>';
+}
+
+// ── Últimos 5 dias ──
+var TAB_RESUMO = {
+  id: 'res', label: '&Uacute;ltimos 5 dias',
+  html:
+    '<div class="card"><div class="lbl">Performance dos &uacute;ltimos ' + N_DIAS + ' dias &uacute;teis</div>' +
+      '<div class="info-box" id="{P}-resInfo"></div>' +
+      '<div class="legend" id="{P}-resLeg" style="margin-bottom:0"></div></div>' +
+    '<div class="grid3">' +
+      '<div class="card"><div class="lbl">Taxa (% a.a.)</div><div class="chart-wrap" style="height:280px"><canvas id="{P}-res-taxa"></canvas></div></div>' +
+      '<div class="card"><div class="lbl">Casada (bps &mdash; LTN &minus; DI1)</div><div class="chart-wrap" style="height:280px"><canvas id="{P}-res-casada"></canvas></div></div>' +
+      '<div class="card"><div class="lbl">% do CDI</div><div class="chart-wrap" style="height:280px"><canvas id="{P}-res-pct_cdi"></canvas></div></div>' +
+    '</div>' +
+    '<div class="card" style="margin-top:16px"><div class="lbl">Varia&ccedil;&atilde;o no per&iacute;odo</div>' +
+      '<div class="tbl-wrap" id="{P}-resTbl"></div>' +
+      '<div class="dev-hint" style="margin-top:8px">&Delta; = valor na data mais recente &minus; valor na data mais antiga da janela. Taxa e casada em bps; % do CDI em pontos percentuais.</div></div>',
+  render: function(mod) {
+    var dates = lastDatesWith(mod, 'taxa', N_DIAS);
+    var d0 = dates[dates.length - 1];
+    var venc = mod.activeVenc(d0);
+    mod.el('resInfo').innerHTML = 'Janela: <b>' + fmt(dates[0]) + '</b> a <b>' + fmt(d0) + '</b> &middot; ' + venc.length +
+      ' vencimentos ativos em ' + fmt(d0) + ' &middot; Cada linha &eacute; um dia; a mais escura &eacute; a mais recente.';
+    mod.el('resLeg').innerHTML = dates.map(function(d, i) {
+      var c = RAMP[RAMP.length - dates.length + i];
+      return '<div class="li"><div class="ld" style="background:' + c + ';height:' + (i === dates.length - 1 ? 4 : 3) + 'px"></div><span>' + fmt(d) + '</span></div>';
+    }).join('');
+
+    ['taxa', 'casada', 'pct_cdi'].forEach(function(k) {
+      var def = LTN_METRICS[k], store = mod.M[k] || {};
+      var ds = dates.map(function(d, i) {
+        var c = RAMP[RAMP.length - dates.length + i], last = i === dates.length - 1;
+        return { label: fmt(d), data: venc.map(function(v) { return store[d] && store[d][v] !== undefined ? store[d][v] : null; }),
+          borderColor: c, backgroundColor: c, borderWidth: last ? 2.5 : 1.5, pointRadius: last ? 3.5 : 2, pointHoverRadius: 5,
+          tension: 0.25, spanGaps: false, order: dates.length - i };
+      });
+      mod.chart('res-' + k, 'res-' + k, { type: 'line', data: { labels: venc.map(fmtShort), datasets: ds },
+        options: lineOptions(def.fmt, def.unit, function(o) { o.scales.x.ticks.maxRotation = 45; o.scales.x.ticks.maxTicksLimit = 20; }) });
+    });
+
+    // Tabela
+    var dI = dates[0];
+    function val(k, d, v) { var s = mod.M[k] || {}; return s[d] && s[d][v] !== undefined ? s[d][v] : null; }
+    var h = '<table class="tbl"><thead><tr><th>Vencimento</th><th>DU</th>' +
+      '<th class="grp">Taxa</th><th>&Delta; (bps)</th>' +
+      '<th class="grp">DI1</th><th class="grp">Casada (bps)</th><th>&Delta; (bps)</th>' +
+      '<th class="grp">% CDI</th><th>&Delta; (p.p.)</th></tr></thead><tbody>';
+    venc.forEach(function(v) {
+      var t0 = val('taxa', d0, v), tI = val('taxa', dI, v);
+      var c0 = val('casada', d0, v), cI = val('casada', dI, v);
+      var p0 = val('pct_cdi', d0, v), pI = val('pct_cdi', dI, v);
+      var di = val('taxa_di', d0, v);
+      h += '<tr><td>' + fmt(v) + '</td><td>' + (mod.getVencDU(v, d0) || '') + '</td>' +
+        '<td class="grp">' + (t0 !== null ? t0.toFixed(2) + '%' : '&ndash;') + '</td><td>' + fmtDelta(t0 !== null && tI !== null ? (t0 - tI) * 100 : null, 'bps') + '</td>' +
+        '<td class="grp">' + (di !== null ? di.toFixed(2) + '%' : '&ndash;') + '</td>' +
+        '<td class="grp">' + (c0 !== null ? c0.toFixed(1) : '&ndash;') + '</td><td>' + fmtDelta(c0 !== null && cI !== null ? c0 - cI : null, 'bps') + '</td>' +
+        '<td class="grp">' + (p0 !== null ? p0.toFixed(2) + '%' : '&ndash;') + '</td><td>' + fmtDelta(p0 !== null && pI !== null ? p0 - pI : null, 'p.p.') + '</td></tr>';
+    });
+    mod.el('resTbl').innerHTML = h + '</tbody></table>';
+  }
+};
+
+// ── Casada & %CDI (histórico) ──
+var sprSel = null;   // vencimentos selecionados
+var TAB_SPREAD = {
+  id: 'spr', label: 'Casada &amp; % CDI',
+  html:
+    '<div class="card"><div class="lbl">Vencimentos</div>' +
+      '<div class="chips" id="{P}-sprChips"></div>' +
+      '<div class="ctrl-row" style="margin-top:14px"><label>Per&iacute;odo:</label>' +
+        '<select id="{P}-sprPeriod"><option value="0">Todo o hist&oacute;rico com DI</option><option value="365">&Uacute;ltimo ano</option>' +
+        '<option value="180" selected>&Uacute;ltimos 6 meses</option><option value="90">&Uacute;ltimos 3 meses</option><option value="30">&Uacute;ltimo m&ecirc;s</option></select>' +
+        '<label class="metric-chk"><input type="checkbox" id="{P}-sprMM"><span style="color:#5a6a7a;font-weight:500">MM 21 dias</span></label>' +
+      '</div>' +
+      '<div class="dev-hint" id="{P}-sprHint" style="margin-top:10px"></div></div>' +
+    '<div class="card"><div class="legend" id="{P}-sprLeg"></div>' +
+      '<div class="lbl" style="margin-top:6px">Casada (bps) &mdash; taxa LTN ANBIMA &minus; DI1 ajuste B3</div>' +
+      '<div class="chart-wrap" style="height:300px"><canvas id="{P}-sprCasada"></canvas></div>' +
+      '<div class="lbl" style="margin-top:22px">% do CDI</div>' +
+      '<div class="chart-wrap" style="height:300px"><canvas id="{P}-sprPct"></canvas></div>' +
+      '<div class="lbl" style="margin-top:22px">Taxa LTN vs DI1 (% a.a.)</div>' +
+      '<div class="dev-hint">Linha cheia = LTN (ANBIMA) &middot; tracejada = DI1 (B3) do vencimento equivalente</div>' +
+      '<div class="chart-wrap" style="height:300px"><canvas id="{P}-sprTaxa"></canvas></div>' +
+    '</div>',
+  render: function(mod) {
+    var store = mod.M.casada || {};
+    var datesDI = mod.dates.filter(function(d) { return store[d] && Object.keys(store[d]).length; });
+    if (!datesDI.length) {
+      mod.el('sprHint').textContent = 'Nenhum dado de casada no arquivo.';
+      ['spr-c', 'spr-p', 'spr-t'].forEach(mod.killChart); return;
+    }
+    var d0 = datesDI[datesDI.length - 1];
+    var vencAtivos = Object.keys(store[d0]).sort();
+    if (!sprSel) {   // padrão: curto, meio e longo
+      sprSel = [vencAtivos[0], vencAtivos[Math.floor(vencAtivos.length / 2)], vencAtivos[vencAtivos.length - 1]]
+        .filter(function(v, i, a) { return v && a.indexOf(v) === i; });
+    }
+    sprSel = sprSel.filter(function(v) { return vencAtivos.indexOf(v) >= 0 || mod.ALL_VENC.indexOf(v) >= 0; });
+    function colorOf(v) { return COLORS[vencAtivos.indexOf(v) >= 0 ? vencAtivos.indexOf(v) % COLORS.length : 7]; }
+
+    var chips = mod.el('sprChips');
+    chips.innerHTML = vencAtivos.map(function(v) {
+      var on = sprSel.indexOf(v) >= 0, c = colorOf(v);
+      return '<span class="chip' + (on ? ' on' : '') + '" data-v="' + v + '" style="' + (on ? 'background:' + c + ';border-color:' + c : '') + '">' + fmt(v) + '</span>';
+    }).join('');
+    chips.querySelectorAll('.chip').forEach(function(ch) {
+      ch.addEventListener('click', function() {
+        var v = this.getAttribute('data-v'), i = sprSel.indexOf(v);
+        if (i >= 0) { sprSel.splice(i, 1); } else { sprSel.push(v); sprSel.sort(); }
+        TAB_SPREAD.render(mod);
+      });
+    });
+
+    var dates = periodFilter(datesDI, parseInt(mod.el('sprPeriod').value, 10) || 0);
+    var showMM = mod.el('sprMM').checked;
+    mod.el('sprHint').textContent = 'Casada e % do CDI disponíveis de ' + fmt(datesDI[0]) + ' a ' + fmt(d0) +
+      ' (início do histórico de DI1 na base B3). Clique nos vencimentos para ligar/desligar.';
+    var keep = subsample(dates.length, 400);
+    var lbls = keep.map(function(i) { return fmt(dates[i]); });
+    function series(k, v) {
+      var s = mod.M[k] || {};
+      return dates.map(function(d) { return s[d] && s[d][v] !== undefined ? s[d][v] : null; });
+    }
+    function sub(arr) { return keep.map(function(i) { return arr[i]; }); }
+
+    var dsC = [], dsP = [], dsT = [];
+    sprSel.forEach(function(v) {
+      var c = colorOf(v), lab = fmt(v);
+      var sc = series('casada', v), sp = series('pct_cdi', v);
+      var base = { borderColor: c, backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, pointHoverRadius: 4, tension: 0.2, spanGaps: false };
+      dsC.push(Object.assign({ label: lab, data: sub(sc) }, base));
+      dsP.push(Object.assign({ label: lab, data: sub(sp) }, base));
+      if (showMM) {
+        var mmBase = { borderColor: hexA(c, 0.6), backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [6,3], pointRadius: 0, tension: 0.2, spanGaps: true };
+        dsC.push(Object.assign({ label: 'MM21 ' + lab, data: sub(movingAvg(sc, 21)) }, mmBase));
+        dsP.push(Object.assign({ label: 'MM21 ' + lab, data: sub(movingAvg(sp, 21)) }, mmBase));
+      }
+      dsT.push(Object.assign({ label: 'LTN ' + lab, data: sub(series('taxa', v)) }, base));
+      dsT.push(Object.assign({ label: 'DI1 ' + lab, data: sub(series('taxa_di', v)) }, base, { borderDash: [5,3], borderWidth: 1.5 }));
+    });
+    mod.el('sprLeg').innerHTML = sprSel.map(function(v) {
+      return '<div class="li"><div class="ld" style="background:' + colorOf(v) + '"></div><span>' + fmt(v) + '</span></div>';
+    }).join('') + (showMM ? '<div class="li"><div class="ld-dash" style="border-color:#8a9bb0"></div><span>MM 21 dias</span></div>' : '');
+
+    mod.chart('spr-c', 'sprCasada', { type: 'line', data: { labels: lbls, datasets: dsC }, options: lineOptions(LTN_METRICS.casada.fmt, 'bps') });
+    mod.chart('spr-p', 'sprPct',    { type: 'line', data: { labels: lbls, datasets: dsP }, options: lineOptions(LTN_METRICS.pct_cdi.fmt, '% CDI') });
+    mod.chart('spr-t', 'sprTaxa',   { type: 'line', data: { labels: lbls, datasets: dsT }, options: lineOptions(LTN_METRICS.taxa.fmt, '% a.a.') });
+  }
+};
+
+var LTN = CurveModule({
+  key: 'ltn', nome: 'LTN', root: 'mp-ltn', csvUrl: 'dados/ltn.csv', parse: parseLong,
+  defaultTab: 'res',
+  tabOrder: ['res', 'curva', 'fwd', 'hist', 'spr', 'dados'],
+  curveMetrics: [LTN_METRICS.taxa, LTN_METRICS.casada, LTN_METRICS.pct_cdi],
+  extraTabs: [TAB_RESUMO, TAB_SPREAD],
+  fwdNote: 'LTN &eacute; zero cupom: a taxa indicativa j&aacute; &eacute; a taxa spot do vencimento, ent&atilde;o o forward &eacute; exato.',
+  formatoHtml: '<b>Formato longo:</b> uma linha por data_referencia &times; data_vencimento<br>' +
+               '<b>Colunas:</b> data_referencia, data_vencimento, taxa_pct_aa, pu, du, duration_du, duration_mod, taxa_di, casada_bps, pct_cdi<br>' +
+               '<b>Casada</b> = taxa LTN (ANBIMA) &minus; DI1 ajuste (B3) do vencimento equivalente, em bps &middot; ' +
+               '<b>% CDI</b> = calculado no Databricks',
+  extraStatus: function(mod) {
+    var s = mod.M.casada || {}, ds = mod.dates.filter(function(d) { return s[d] && Object.keys(s[d]).length; });
+    return [['Casada desde', ds.length ? fmt(ds[0]) : '&ndash;']];
+  },
+  onLoad: function(mod) {
+    mod.el('sprPeriod').onchange = function() { TAB_SPREAD.render(mod); };
+    mod.el('sprMM').onchange = function() { TAB_SPREAD.render(mod); };
+  }
+});
+
+// ══════════════════════════════════════════════════════
+// ABAS PRINCIPAIS E CARGA
+// ══════════════════════════════════════════════════════
+var MODULES = { ntnb: NTNB, ltn: LTN };
+document.querySelectorAll('.main-tab-btn').forEach(function(b) {
+  b.addEventListener('click', function() {
+    var k = this.getAttribute('data-main');
+    document.querySelectorAll('.main-tab-btn').forEach(function(x) { x.classList.toggle('active', x === b); });
+    document.querySelectorAll('.main-pane').forEach(function(p) { p.classList.toggle('active', p.id === 'mp-' + k); });
+    try { history.replaceState(null, '', '#' + k); } catch (e) {}
+    MODULES[k].renderActive();
+  });
+});
+
+function loadData() {
+  var btn = document.getElementById('btnRefresh');
+  btn.classList.add('loading'); btn.textContent = '⏳ Carregando...';
+  document.getElementById('refreshStatus').textContent = '';
+  var jobs = Object.keys(MODULES).map(function(k) {
+    return MODULES[k].load().then(function() { return null; }, function() { return MODULES[k].cfg.nome; });
+  });
+  Promise.all(jobs).then(function(res) {
+    var falhas = res.filter(Boolean);
+    btn.classList.remove('loading'); btn.textContent = '⟳ Atualizar dados';
+    var hora = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('refreshStatus').textContent = falhas.length
+      ? 'Erro ao carregar: ' + falhas.join(', ') + ' (veja a aba Dados)' : 'Atualizado ' + hora;
+  });
+}
+document.getElementById('btnRefresh').addEventListener('click', loadData);
+
+window.addEventListener('load', function() {
+  var k = (location.hash || '').replace('#', '');
+  if (MODULES[k]) { document.querySelector('.main-tab-btn[data-main="' + k + '"]').click(); }
+  loadData();
+});
 </script>
 </body>
 </html>
