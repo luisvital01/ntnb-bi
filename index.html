@@ -95,6 +95,8 @@ select:focus { border-color: #C7452D; }
 .grid2 + .card, .grid3 + .card { margin-top: 16px; }
 .grid2 .card { margin-bottom: 0; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn-mini { font-size: 12px; padding: 4px 10px; border-radius: 6px; border: 1px solid #D6D0CF; background: #fff; color: #5E5A59; cursor: pointer; }
+.btn-mini:hover { border-color: #C7452D; color: #C7452D; }
 .chip { font-size: 12px; font-weight: 500; padding: 5px 11px; border-radius: 6px; border: 1.5px solid #D6D0CF; background: #fff; color: #5E5A59; cursor: pointer; user-select: none; }
 .chip.on { color: #fff; }
 .tbl-wrap { overflow-x: auto; }
@@ -133,11 +135,13 @@ select:focus { border-color: #C7452D; }
     <button class="main-tab-btn" data-main="ltn">LTN</button>
     <button class="main-tab-btn" data-main="ntnf">NTN-F</button>
     <button class="main-tab-btn" data-main="lft">LFT</button>
+    <button class="main-tab-btn" data-main="download">&#8595; Download</button>
   </div>
   <div class="main-pane active" id="mp-ntnb"></div>
   <div class="main-pane" id="mp-ltn"></div>
   <div class="main-pane" id="mp-ntnf"></div>
   <div class="main-pane" id="mp-lft"></div>
+  <div class="main-pane" id="mp-download"></div>
 </div>
 
 <script>
@@ -1160,16 +1164,263 @@ var LFT = CurveModule({
 });
 
 // ══════════════════════════════════════════════════════
-// ABAS PRINCIPAIS E CARGA
+// DOWNLOAD — exporta qualquer título/campo/período em CSV ou Excel
 // ══════════════════════════════════════════════════════
 var MODULES = { ntnb: NTNB, ltn: LTN, ntnf: NTNF, lft: LFT };
+var DL_CAMPOS = [   // chave interna (mod.M) → rótulo e nome da coluna no arquivo
+  { k: 'taxa',         lbl: 'Taxa ANBIMA',            col: 'taxa_pct_aa' },
+  { k: 'pu',           lbl: 'PU',                     col: 'pu' },
+  { k: 'du',           lbl: 'DU',                     col: 'du' },
+  { k: 'duration',     lbl: 'Duration (DU)',          col: 'duration_du' },
+  { k: 'duration_mod', lbl: 'Duration modificada',    col: 'duration_mod' },
+  { k: 'taxa_di',      lbl: 'DI1 do vencimento',      col: 'taxa_di' },
+  { k: 'casada',       lbl: 'Casada (bps)',           col: 'casada_bps' },
+  { k: 'real_basis',   lbl: 'Real basis (bps)',       col: 'real_basis_bps' },
+  { k: 'pct_cdi',      lbl: '% CDI',                  col: 'pct_cdi' },
+  { k: 'pct_cdi_proj', lbl: '% CDI projetado',        col: 'pct_cdi_proj' },
+  { k: 'taxa_over',    lbl: 'Taxa over',              col: 'taxa_over' },
+  { k: 'cdi',          lbl: 'CDI (% a.a.)',           col: 'cdi_pct_aa' },
+  { k: 'taxa_di_dur',  lbl: 'DI na duration',         col: 'taxa_di_dur' },
+  { k: 'implicita',    lbl: 'Infla&ccedil;&atilde;o impl&iacute;cita', col: 'implicita_pct' },
+  { k: 'di_extrap',    lbl: 'DI extrapolado (0/1)',   col: 'di_extrapolado' },
+  { k: 'di_interp',    lbl: 'DI interpolado (0/1)',   col: 'di_interpolado' }
+];
+var XLSX_URL = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+
+var DL = (function() {
+  var root = document.getElementById('mp-download');
+  var ordem = ['ntnb', 'ltn', 'ntnf', 'lft'];
+  var st = { titulo: 'ntnb', campos: ['taxa'], venc: null };
+
+  root.innerHTML =
+    '<div class="card"><div class="lbl">1. T&iacute;tulo</div><div class="chips" id="dl-titulos"></div></div>' +
+    '<div class="card"><div class="lbl">2. Campos</div><div class="chips" id="dl-campos"></div>' +
+      '<div class="dev-hint" style="margin-top:8px">Clique para marcar/desmarcar. S&oacute; aparecem os campos que existem para o t&iacute;tulo escolhido.</div></div>' +
+    '<div class="card"><div class="lbl">3. Per&iacute;odo e vencimentos</div>' +
+      '<div class="ctrl-row" style="margin-bottom:12px"><label>De:</label><input type="date" class="date-input" id="dl-ini">' +
+        '<label>At&eacute;:</label><input type="date" class="date-input" id="dl-fim">' +
+        '<span class="dev-hint" id="dl-range" style="margin:0"></span></div>' +
+      '<div class="chips" id="dl-venc"></div>' +
+      '<div class="ctrl-row" style="margin-top:10px"><button class="btn-mini" id="dl-venc-all">Todos</button><button class="btn-mini" id="dl-venc-none">Nenhum</button>' +
+        '<button class="btn-mini" id="dl-venc-ativos">S&oacute; ativos no fim do per&iacute;odo</button></div></div>' +
+    '<div class="card"><div class="lbl">4. Formato</div>' +
+      '<div class="ctrl-row">' +
+        '<label>Layout:</label><select id="dl-layout"><option value="pivot">Pivotado (datas nas linhas, vencimentos nas colunas)</option>' +
+          '<option value="long">Longo (uma linha por data &times; vencimento)</option></select>' +
+        '<label>Arquivo:</label><select id="dl-fmt"><option value="xlsx">Excel (.xlsx)</option><option value="csv_br">CSV Excel Brasil (; e v&iacute;rgula decimal)</option>' +
+          '<option value="csv">CSV padr&atilde;o (, e ponto decimal)</option></select>' +
+      '</div>' +
+      '<div class="dev-hint" style="margin-top:8px">No Excel pivotado, cada campo vira uma aba da planilha. No CSV pivotado, as colunas ficam como &ldquo;campo | vencimento&rdquo;.</div>' +
+      '<div class="ctrl-row" style="margin-top:16px"><button class="btnp" id="dl-go">&#8595; Baixar</button><span class="date-note" id="dl-msg"></span></div></div>' +
+    '<div class="card"><div class="lbl">Pr&eacute;via</div><div class="info-box" id="dl-info"></div><div class="tbl-wrap" id="dl-prev"></div></div>';
+
+  function $(id) { return document.getElementById(id); }
+  function mod() { return MODULES[st.titulo]; }
+  function camposDisp() { var M = mod().M || {}; return DL_CAMPOS.filter(function(c) { return M[c.k] && Object.keys(M[c.k]).length; }); }
+
+  function chip(on, txt, attr) {
+    return '<span class="chip' + (on ? ' on' : '') + '" ' + attr + ' style="' + (on ? 'background:#C7452D;border-color:#C7452D' : '') + '">' + txt + '</span>';
+  }
+  function bindChips(id, fn) {
+    $(id).querySelectorAll('.chip').forEach(function(c) { c.addEventListener('click', function() { fn(this.getAttribute('data-v')); }); });
+  }
+
+  // ── seleção ──
+  function periodo() {
+    var m = mod(), ini = $('dl-ini').value, fim = $('dl-fim').value;
+    return m.dates.filter(function(d) { return (!ini || d >= ini) && (!fim || d <= fim); });
+  }
+  function vencNoPeriodo(dates) {
+    var M = mod().M, vs = {};
+    dates.forEach(function(d) { st.campos.forEach(function(k) { Object.keys((M[k] || {})[d] || {}).forEach(function(v) { vs[v] = true; }); }); });
+    return Object.keys(vs).sort();
+  }
+
+  function render() {
+    var m = mod();
+    $('dl-titulos').innerHTML = ordem.map(function(k) { return chip(k === st.titulo, MODULES[k].cfg.nome, 'data-v="' + k + '"'); }).join('');
+    bindChips('dl-titulos', function(k) {
+      if (k === st.titulo) { return; }
+      st.titulo = k; st.venc = null;
+      var disp = camposDisp().map(function(c) { return c.k; });
+      st.campos = st.campos.filter(function(c) { return disp.indexOf(c) >= 0; });
+      if (!st.campos.length) { st.campos = ['taxa']; }
+      setDatas(true); render();
+    });
+    if (!m.loaded) {
+      $('dl-campos').innerHTML = ''; $('dl-venc').innerHTML = '';
+      $('dl-info').textContent = 'Carregando dados de ' + m.cfg.nome + '…'; $('dl-prev').innerHTML = '';
+      return;
+    }
+    $('dl-campos').innerHTML = camposDisp().map(function(c) { return chip(st.campos.indexOf(c.k) >= 0, c.lbl, 'data-v="' + c.k + '"'); }).join('');
+    bindChips('dl-campos', function(k) {
+      var i = st.campos.indexOf(k);
+      if (i >= 0) { st.campos.splice(i, 1); } else { st.campos.push(k); }
+      render();
+    });
+
+    var dates = periodo(), vs = vencNoPeriodo(dates);
+    if (st.venc === null) { st.venc = vs.slice(); }
+    $('dl-range').textContent = 'Dados de ' + m.cfg.nome + ': ' + fmt(m.dates[0]) + ' a ' + fmt(m.dates[m.dates.length - 1]);
+    $('dl-venc').innerHTML = vs.map(function(v) { return chip(st.venc.indexOf(v) >= 0, fmt(v), 'data-v="' + v + '"'); }).join('') ||
+      '<span class="dev-hint">Nenhum vencimento com dados no per&iacute;odo.</span>';
+    bindChips('dl-venc', function(v) {
+      var i = st.venc.indexOf(v);
+      if (i >= 0) { st.venc.splice(i, 1); } else { st.venc.push(v); }
+      render();
+    });
+    preview();
+  }
+
+  function setDatas(reset) {
+    var m = mod(); if (!m.loaded) { return; }
+    ['dl-ini', 'dl-fim'].forEach(function(id) { $(id).min = m.dates[0]; $(id).max = m.dates[m.dates.length - 1]; });
+    if (reset || !$('dl-fim').value) {
+      $('dl-fim').value = m.dates[m.dates.length - 1];
+      var d = new Date(m.dates[m.dates.length - 1] + 'T12:00:00Z'); d.setUTCFullYear(d.getUTCFullYear() - 1);
+      var ini = d.toISOString().slice(0, 10);
+      $('dl-ini').value = ini < m.dates[0] ? m.dates[0] : ini;
+    }
+  }
+
+  // ── montagem da tabela ──
+  function campoDef(k) { return DL_CAMPOS.filter(function(c) { return c.k === k; })[0]; }
+  function montar() {
+    var M = mod().M, dates = periodo();
+    var venc = vencNoPeriodo(dates).filter(function(v) { return st.venc.indexOf(v) >= 0; });
+    var campos = DL_CAMPOS.map(function(c) { return c.k; }).filter(function(k) { return st.campos.indexOf(k) >= 0; });
+    function val(k, d, v) { var s = M[k] || {}; return s[d] && s[d][v] !== undefined ? s[d][v] : null; }
+    var long = [];
+    dates.forEach(function(d) {
+      venc.forEach(function(v) {
+        var linha = { d: d, v: v, x: campos.map(function(k) { return val(k, d, v); }) };
+        if (linha.x.some(function(x) { return x !== null; })) { long.push(linha); }
+      });
+    });
+    var datasComDado = {}; long.forEach(function(l) { datasComDado[l.d] = true; });
+    return { dates: dates.filter(function(d) { return datasComDado[d]; }), venc: venc, campos: campos, long: long, val: val };
+  }
+
+  function preview() {
+    if (!st.campos.length) { $('dl-info').textContent = 'Escolha pelo menos um campo.'; $('dl-prev').innerHTML = ''; return; }
+    var T = montar(), layout = $('dl-layout').value;
+    var nLin = layout === 'long' ? T.long.length : T.dates.length;
+    var nCol = layout === 'long' ? 2 + T.campos.length : 1 + T.venc.length;
+    $('dl-info').innerHTML = '<b>' + mod().cfg.nome + '</b> &middot; ' + T.campos.length + ' campo(s) &middot; ' + T.venc.length + ' vencimento(s) &middot; ' +
+      T.dates.length + ' data(s) &middot; arquivo com <b>' + nLin.toLocaleString('pt-BR') + '</b> linhas &times; ' + nCol + ' colunas' +
+      (layout === 'pivot' && T.campos.length > 1 ? ' (por campo)' : '');
+    var h = '<table class="tbl"><thead><tr>';
+    if (layout === 'long') {
+      h += '<th>data_referencia</th><th>data_vencimento</th>' + T.campos.map(function(k) { return '<th>' + campoDef(k).col + '</th>'; }).join('') + '</tr></thead><tbody>';
+      T.long.slice(-8).forEach(function(l) {
+        h += '<tr><td>' + fmt(l.d) + '</td><td>' + fmt(l.v) + '</td>' + l.x.map(function(x) { return '<td>' + (x === null ? '' : x) + '</td>'; }).join('') + '</tr>';
+      });
+    } else {
+      var k = T.campos[0];
+      h += '<th>data (' + campoDef(k).col + ')</th>' + T.venc.map(function(v) { return '<th>' + fmt(v) + '</th>'; }).join('') + '</tr></thead><tbody>';
+      T.dates.slice(-8).forEach(function(d) {
+        h += '<tr><td>' + fmt(d) + '</td>' + T.venc.map(function(v) { var x = T.val(k, d, v); return '<td>' + (x === null ? '' : x) + '</td>'; }).join('') + '</tr>';
+      });
+    }
+    $('dl-prev').innerHTML = h + '</tbody></table><div class="dev-hint" style="margin-top:6px">&Uacute;ltimas 8 linhas' +
+      (layout === 'pivot' && T.campos.length > 1 ? ' do primeiro campo' : '') + '.</div>';
+  }
+
+  // ── geração dos arquivos ──
+  function nomeArquivo(ext) {
+    return mod().cfg.nome.replace(/[^A-Za-z0-9]/g, '') + '_' + st.campos.join('-') + '_' + $('dl-ini').value + '_' + $('dl-fim').value + '.' + ext;
+  }
+  function baixarBlob(blob, nome) {
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nome;
+    document.body.appendChild(a); a.click();
+    setTimeout(function() { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+  function gerarCSV(T, br) {
+    var sep = br ? ';' : ',';
+    function n(x) { return x === null ? '' : (br ? String(x).replace('.', ',') : String(x)); }
+    function dt(iso) { return br ? fmt(iso) : iso; }
+    var linhas = [];
+    if ($('dl-layout').value === 'long') {
+      linhas.push(['data_referencia', 'data_vencimento'].concat(T.campos.map(function(k) { return campoDef(k).col; })).join(sep));
+      T.long.forEach(function(l) { linhas.push([dt(l.d), dt(l.v)].concat(l.x.map(n)).join(sep)); });
+    } else {
+      var cab = ['data_referencia'];
+      T.campos.forEach(function(k) { T.venc.forEach(function(v) { cab.push(T.campos.length > 1 ? campoDef(k).col + ' | ' + dt(v) : dt(v)); }); });
+      linhas.push(cab.join(sep));
+      T.dates.forEach(function(d) {
+        var row = [dt(d)];
+        T.campos.forEach(function(k) { T.venc.forEach(function(v) { row.push(n(T.val(k, d, v))); }); });
+        linhas.push(row.join(sep));
+      });
+    }
+    // BOM para o Excel abrir acentos corretamente
+    baixarBlob(new Blob(['﻿' + linhas.join('\r\n')], { type: 'text/csv;charset=utf-8' }), nomeArquivo('csv'));
+  }
+  function carregarXLSX() {
+    if (window.XLSX) { return Promise.resolve(); }
+    return new Promise(function(ok, erro) {
+      var s = document.createElement('script'); s.src = XLSX_URL; s.onload = ok;
+      s.onerror = function() { erro(new Error('não foi possível carregar a biblioteca de Excel')); };
+      document.head.appendChild(s);
+    });
+  }
+  function gerarXLSX(T) {
+    // data como número serial do Excel (evita o deslocamento de fuso horário de objetos Date)
+    function data(iso) { var p = iso.split('-'); return { t: 'n', v: (Date.UTC(+p[0], +p[1] - 1, +p[2]) - Date.UTC(1899, 11, 30)) / 86400000, z: 'dd/mm/yyyy' }; }
+    var wb = XLSX.utils.book_new();
+    if ($('dl-layout').value === 'long') {
+      var aoa = [['data_referencia', 'data_vencimento'].concat(T.campos.map(function(k) { return campoDef(k).col; }))];
+      T.long.forEach(function(l) { aoa.push([data(l.d), data(l.v)].concat(l.x)); });
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), 'dados');
+    } else {
+      T.campos.forEach(function(k) {
+        var aoa = [['data_referencia'].concat(T.venc.map(fmt))];
+        T.dates.forEach(function(d) { aoa.push([data(d)].concat(T.venc.map(function(v) { return T.val(k, d, v); }))); });
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), campoDef(k).col.slice(0, 31));
+      });
+    }
+    XLSX.writeFile(wb, nomeArquivo('xlsx'), { compression: true });
+  }
+  function baixar() {
+    var msg = $('dl-msg'); msg.textContent = '';
+    if (!mod().loaded) { msg.textContent = 'Dados ainda carregando.'; return; }
+    if (!st.campos.length) { msg.textContent = 'Escolha pelo menos um campo.'; return; }
+    var T = montar();
+    if (!T.long.length) { msg.textContent = 'Nada para baixar com esses filtros.'; return; }
+    var f = $('dl-fmt').value;
+    if (f === 'xlsx') {
+      msg.textContent = 'Gerando Excel…';
+      carregarXLSX().then(function() { gerarXLSX(T); msg.textContent = ''; }, function(e) { msg.textContent = 'Erro: ' + e.message + '. Tente o CSV.'; });
+    } else {
+      gerarCSV(T, f === 'csv_br');
+    }
+  }
+
+  // ── eventos ──
+  ['dl-ini', 'dl-fim'].forEach(function(id) { $(id).addEventListener('change', function() { st.venc = null; render(); }); });
+  $('dl-layout').addEventListener('change', preview);
+  $('dl-venc-all').addEventListener('click', function() { st.venc = vencNoPeriodo(periodo()); render(); });
+  $('dl-venc-none').addEventListener('click', function() { st.venc = []; render(); });
+  $('dl-venc-ativos').addEventListener('click', function() {
+    var m = mod(), ds = periodo(), d = ds[ds.length - 1];
+    st.venc = d ? m.activeVenc(d) : []; render();
+  });
+  $('dl-go').addEventListener('click', baixar);
+
+  return { renderActive: function() { setDatas(false); render(); } };
+}());
+
+// ══════════════════════════════════════════════════════
+// ABAS PRINCIPAIS E CARGA
+// ══════════════════════════════════════════════════════
+var PAGES = Object.assign({ download: DL }, MODULES);
 document.querySelectorAll('.main-tab-btn').forEach(function(b) {
   b.addEventListener('click', function() {
     var k = this.getAttribute('data-main');
     document.querySelectorAll('.main-tab-btn').forEach(function(x) { x.classList.toggle('active', x === b); });
     document.querySelectorAll('.main-pane').forEach(function(p) { p.classList.toggle('active', p.id === 'mp-' + k); });
     try { history.replaceState(null, '', '#' + k); } catch (e) {}
-    MODULES[k].renderActive();
+    PAGES[k].renderActive();
   });
 });
 
@@ -1182,6 +1433,7 @@ function loadData() {
   });
   Promise.all(jobs).then(function(res) {
     var falhas = res.filter(Boolean);
+    if (document.getElementById('mp-download').classList.contains('active')) { DL.renderActive(); }
     btn.classList.remove('loading'); btn.textContent = '⟳ Atualizar dados';
     var hora = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     document.getElementById('refreshStatus').textContent = falhas.length
@@ -1192,7 +1444,7 @@ document.getElementById('btnRefresh').addEventListener('click', loadData);
 
 window.addEventListener('load', function() {
   var k = (location.hash || '').replace('#', '');
-  if (MODULES[k]) { document.querySelector('.main-tab-btn[data-main="' + k + '"]').click(); }
+  if (PAGES[k]) { document.querySelector('.main-tab-btn[data-main="' + k + '"]').click(); }
   loadData();
 });
 </script>
