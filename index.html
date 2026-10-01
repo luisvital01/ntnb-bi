@@ -53,6 +53,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .ctrl-row label { font-size: 13px; color: #5a6a7a; font-weight: 500; }
 select { font-size: 13px; padding: 7px 10px; border-radius: 7px; border: 1px solid #c8d4e0; background: #fff; color: #1a1a1a; outline: none; cursor: pointer; }
 select:focus { border-color: #185FA5; }
+.date-input { font-family: inherit; font-size: 13px; padding: 6px 10px; border-radius: 7px; border: 1px solid #c8d4e0; background: #fff; color: #1a1a1a; outline: none; cursor: pointer; min-width: 170px; }
+.date-input:focus { border-color: #185FA5; }
+.date-input::-webkit-calendar-picker-indicator { cursor: pointer; opacity: .7; }
+.date-note { font-size: 11px; color: #BA7517; }
 .mx-wrap { overflow-x: auto; }
 .mx { border-collapse: collapse; font-size: 11.5px; }
 .mx th { background: #f4f7fb; padding: 7px 10px; text-align: center; font-weight: 600; color: #5a6a7a; border: 1px solid #e4e9f0; white-space: nowrap; font-size: 11px; }
@@ -341,8 +345,9 @@ function CurveModule(cfg) {
 
   h += '<div class="pane" id="' + P + '-pn-curva">' +
     '<div class="card"><div class="lbl">Datas para comparar</div><div class="date-tags" id="' + P + '-dtags"></div>' +
-      '<div class="add-row"><select id="' + P + '-dateSelect" style="min-width:180px"></select>' +
+      '<div class="add-row"><input type="date" class="date-input" id="' + P + '-dateSelect">' +
       '<button class="btnp" id="' + P + '-btnAddDate">+ Adicionar data</button>' +
+      '<span class="date-note" id="' + P + '-dateNote"></span>' +
       (metrics.length > 1 ? '<span style="flex:1"></span><label style="font-size:13px;color:#5a6a7a;font-weight:500">M&eacute;trica:</label><select id="' + P + '-curvaMetric">' +
         metrics.map(function(m) { return '<option value="' + m.key + '">' + m.label + '</option>'; }).join('') + '</select>' : '') +
       '</div></div>' +
@@ -352,7 +357,7 @@ function CurveModule(cfg) {
 
   h += '<div class="pane" id="' + P + '-pn-fwd">' +
     '<div class="card"><div class="ctrl-row" style="margin-bottom:12px"><label>Data de refer&ecirc;ncia:</label>' +
-      '<select id="' + P + '-fwdDate" style="min-width:180px"></select></div>' +
+      '<input type="date" class="date-input" id="' + P + '-fwdDate"></div>' +
       '<div class="info-box" id="' + P + '-fwdInfo">Carregue dados para ver a matriz.</div></div>' +
     '<div class="card"><div class="lbl">Matriz de forwards (DU/252) &mdash; clique numa c&eacute;lula para acompanhar no tempo</div>' +
       '<div class="mx-wrap"><div id="' + P + '-mxContainer"><div class="nodata"><span class="nd-icon">&#8862;</span>Carregue dados para ver a matriz</div></div></div></div>' +
@@ -437,6 +442,15 @@ function CurveModule(cfg) {
     return mod.ALL_VENC.filter(function(v) { return row[v] !== undefined && getVencDU(v, date) !== null; });
   }
   mod.activeVenc = activeVenc;
+  // Data com dados mais próxima: a própria ou o último dia útil anterior disponível
+  function nearestDate(iso) {
+    var ds = mod.dates; if (!ds.length || !iso) { return null; }
+    if (iso <= ds[0]) { return ds[0]; }
+    var lo = 0, hi = ds.length - 1;
+    while (lo < hi) { var mid = (lo + hi + 1) >> 1; if (ds[mid] <= iso) { lo = mid; } else { hi = mid - 1; } }
+    return ds[lo];
+  }
+  mod.nearestDate = nearestDate;
   function getFwdValue(date, from, to) {
     var row = mod.DB[date];
     if (!row || row[from] === undefined || row[to] === undefined) { return null; }
@@ -483,11 +497,11 @@ function CurveModule(cfg) {
       mod.selDates = mod.selDates.filter(function(d) { return mod.DB[d]; });
       if (!mod.selDates.length) { mod.selDates = [dates[dates.length - 1]]; }
     }
-    var opts = dates.slice().reverse().map(function(d) { return '<option value="' + d + '">' + fmt(d) + '</option>'; }).join('');
-    var curFwd = el('fwdDate').value;
-    el('dateSelect').innerHTML = opts;
-    el('fwdDate').innerHTML = opts;
-    if (curFwd && mod.DB[curFwd]) { el('fwdDate').value = curFwd; }
+    ['dateSelect', 'fwdDate'].forEach(function(id) {
+      var inp = el(id);
+      inp.min = dates[0]; inp.max = dates[dates.length - 1];
+      if (!inp.value || inp.value > inp.max || inp.value < inp.min) { inp.value = dates[dates.length - 1]; }
+    });
     mod.loaded = true;
     if (cfg.onLoad) { cfg.onLoad(mod); }
     populateHistSelects(); updateTags(); updateFwdTags();
@@ -496,8 +510,9 @@ function CurveModule(cfg) {
 
   // ── Curva ──
   function addDate() {
-    var v = el('dateSelect').value;
-    if (!v || !mod.DB[v] || mod.selDates.indexOf(v) >= 0) { return; }
+    var pedido = el('dateSelect').value, v = nearestDate(pedido);
+    el('dateNote').textContent = (v && v !== pedido) ? fmt(pedido) + ' sem dados — usado ' + fmt(v) + ' (dia útil anterior)' : '';
+    if (!v || mod.selDates.indexOf(v) >= 0) { return; }
     mod.selDates.push(v); updateTags(); renderCurva();
   }
   function removeDate(d) {
@@ -548,8 +563,9 @@ function CurveModule(cfg) {
   // ── Matriz de forwards ──
   function renderForward() {
     var sel = el('fwdDate');
-    var date = sel.value || (sel.options[0] && sel.options[0].value);
-    if (date && sel.value !== date) { sel.value = date; }
+    var pedido = sel.value || mod.dates[mod.dates.length - 1];
+    var date = nearestDate(pedido);
+    var aviso = (date && date !== pedido) ? ' · ' + fmt(pedido) + ' sem dados, usado o dia útil anterior' : '';
     var info = el('fwdInfo'), container = el('mxContainer');
     if (!date || !mod.DB[date]) {
       info.textContent = 'Carregue dados para ver a matriz.';
@@ -559,7 +575,7 @@ function CurveModule(cfg) {
     var venc = activeVenc(date);
     var rates = venc.map(function(v) { return mod.DB[date][v]; });
     var dus = venc.map(function(v) { return getVencDU(v, date); });
-    info.textContent = 'Data: ' + fmt(date) + ' · ' + venc.length + ' vencimentos ativos · DU/252 · Clique numa célula para acompanhar';
+    info.textContent = 'Data: ' + fmt(date) + aviso + ' · ' + venc.length + ' vencimentos ativos · DU/252 · Clique numa célula para acompanhar';
     if (venc.length < 2) { container.innerHTML = '<div class="nodata"><span class="nd-icon">&#8862;</span>Menos de 2 vencimentos nesta data</div>'; return; }
     var allFwd = [], matrix = [], i, j;
     for (i = 0; i < venc.length; i++) {
