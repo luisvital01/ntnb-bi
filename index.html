@@ -339,9 +339,11 @@ function CurveModule(cfg) {
     { id: 'hist',  label: 'Evolu&ccedil;&atilde;o de Forwards' }
   ].concat(cfg.extraTabs || []);
   if (cfg.tabOrder) { tabs.sort(function(a, b) { return cfg.tabOrder.indexOf(a.id) - cfg.tabOrder.indexOf(b.id); }); }
+  // cfg.hideTabs: abas que não aparecem para este título (os painéis continuam no DOM, só sem botão)
+  var tabsVisiveis = tabs.filter(function(t) { return (cfg.hideTabs || []).indexOf(t.id) < 0; });
 
   // ── HTML ──
-  var h = '<div class="tabs">' + tabs.map(function(t) {
+  var h = '<div class="tabs">' + tabsVisiveis.map(function(t) {
     return '<button class="tab-btn' + (t.id === mod.active ? ' active' : '') + '" data-tab="' + t.id + '">' + t.label + '</button>';
   }).join('') + '</div>';
 
@@ -1132,7 +1134,8 @@ var LFT = CurveModule({
   key: 'lft', nome: 'LFT', root: 'mp-lft', csvUrl: 'dados/lft.csv',
   parse: function(t) { return parseLong(t, { allowNeg: true }); },
   defaultTab: 'res',
-  tabOrder: ['res', 'curva', 'fwd', 'hist', 'spr', 'dados'],
+  tabOrder: ['res', 'curva', 'spr', 'dados', 'fwd', 'hist'],
+  hideTabs: ['fwd', 'hist'],                       // LFT: sem matriz/evolução de forwards
   curveMetrics: [LFT_DEFS.taxa, LFT_DEFS.taxa_over, LFT_DEFS.pct_cdi, LFT_DEFS.pct_cdi_proj, LFT_DEFS.taxa_di],
   fwdBases: [{ key: 'taxa', label: 'Taxa ANBIMA', short: '', rate: 'taxa', prazo: 'du', prazoLbl: 'DU', allowNeg: true, dec: 4 }],
   extraTabs: [
