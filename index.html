@@ -119,7 +119,7 @@ select:focus { border-color: #C7452D; }
 <div class="topbar">
   <div class="topbar-info">
     <h1>BI de Títulos Públicos</h1>
-    <p>NTN-B &middot; LTN &middot; NTN-F &middot; Curvas de juros &middot; Forwards DU/252 &middot; Calend&aacute;rio ANBIMA</p>
+    <p>NTN-B &middot; LTN &middot; NTN-F &middot; LFT &middot; Curvas de juros &middot; Forwards DU/252 &middot; Calend&aacute;rio ANBIMA</p>
   </div>
   <div class="topbar-right">
     <span class="refresh-status" id="refreshStatus"></span>
@@ -132,10 +132,12 @@ select:focus { border-color: #C7452D; }
     <button class="main-tab-btn active" data-main="ntnb">NTN-B</button>
     <button class="main-tab-btn" data-main="ltn">LTN</button>
     <button class="main-tab-btn" data-main="ntnf">NTN-F</button>
+    <button class="main-tab-btn" data-main="lft">LFT</button>
   </div>
   <div class="main-pane active" id="mp-ntnb"></div>
   <div class="main-pane" id="mp-ltn"></div>
   <div class="main-pane" id="mp-ntnf"></div>
+  <div class="main-pane" id="mp-lft"></div>
 </div>
 
 <script>
@@ -188,11 +190,11 @@ function countDU(fromISO, toISO) {
 // ══════════════════════════════════════════════════════
 // FORWARD DU/252 E ESTATÍSTICAS
 // ══════════════════════════════════════════════════════
-function calcFwdDU(ri, rj, dui, duj) {
+function calcFwdDU(ri, rj, dui, duj, allowNeg) {
   if (!dui || !duj || duj <= dui || dui <= 0) { return null; }
   var Fi = Math.pow(1 + ri / 100, dui / 252);
   var Fj = Math.pow(1 + rj / 100, duj / 252);
-  if (Fi <= 0 || Fj <= 0 || Fj <= Fi) { return null; }
+  if (Fi <= 0 || Fj <= 0 || (!allowNeg && Fj <= Fi)) { return null; }
   return (Math.pow(Fj / Fi, 252 / (duj - dui)) - 1) * 100;
 }
 function movingAvg(data, W) {
@@ -479,7 +481,7 @@ function CurveModule(cfg) {
   function getFwdValue(date, from, to, bk) {
     var base = baseOf(bk), row = (mod.M[base.rate] || {})[date];
     if (!row || row[from] === undefined || row[to] === undefined) { return null; }
-    return calcFwdDU(row[from], row[to], prazoOf(base, from, date), prazoOf(base, to, date));
+    return calcFwdDU(row[from], row[to], prazoOf(base, from, date), prazoOf(base, to, date), base.allowNeg);
   }
   mod.load = function() {
     return fetch(cfg.csvUrl + '?t=' + Date.now())
@@ -609,7 +611,7 @@ function CurveModule(cfg) {
       matrix[i] = [];
       for (j = 0; j < venc.length; j++) {
         if (i >= j) { matrix[i][j] = null; continue; }
-        var f = calcFwdDU(rates[i], rates[j], dus[i], dus[j]);
+        var f = calcFwdDU(rates[i], rates[j], dus[i], dus[j], base.allowNeg);
         matrix[i][j] = f; if (f !== null) { allFwd.push(f); }
       }
     }
@@ -623,14 +625,14 @@ function CurveModule(cfg) {
     html += '</tr></thead><tbody>';
     venc.forEach(function(vi, i) {
       html += '<tr><td class="rl">' + fmt(vi) + (flag[vi] ? ' <span title="DI extrapolado (duration além da curva DI1)" style="color:#8C6436">&#9888;</span>' : '') +
-        '<br><span style="font-weight:400;font-size:10px;color:#807C7B">' + rates[i].toFixed(2) + '% &middot; ' + Math.round(dus[i]) + ' ' + base.prazoLbl + '</span></td>';
+        '<br><span style="font-weight:400;font-size:10px;color:#807C7B">' + rates[i].toFixed(base.dec || 2) + '% &middot; ' + Math.round(dus[i]) + ' ' + base.prazoLbl + '</span></td>';
       venc.forEach(function(vj, j) {
         if (i === j) { html += '<td class="cd">&mdash;</td>'; }
         else if (i > j) { html += '<td class="cn">&middot;</td>'; }
         else {
           var v2 = matrix[i][j]; if (v2 === null) { html += '<td class="cn">&mdash;</td>'; return; }
           var isTk = mod.tracked.some(function(t) { return t.from === vi && t.to === vj && t.base === base.key; });
-          html += '<td class="' + cc(v2) + (isTk ? ' tracked' : '') + '" data-from="' + vi + '" data-to="' + vj + '">' + v2.toFixed(2) + '%</td>';
+          html += '<td class="' + cc(v2) + (isTk ? ' tracked' : '') + '" data-from="' + vi + '" data-to="' + vj + '">' + v2.toFixed(base.dec || 2) + '%</td>';
         }
       });
       html += '</tr>';
@@ -746,8 +748,9 @@ function CurveModule(cfg) {
     });
 
     el('histLeg').innerHTML = legItems.join('');
+    var dh = Math.max.apply(null, mod.tracked.map(function(t) { return baseOf(t.base).dec || 2; }));
     mod.chart('hist', 'histChart', { type: 'line', data: { labels: lbls, datasets: datasets },
-      options: lineOptions(function(v, axis) { return axis ? v.toFixed(2) + '%' : v.toFixed(2) + '% a.a.'; }, '% a.a.') });
+      options: lineOptions(function(v, axis) { return axis ? v.toFixed(dh) + '%' : v.toFixed(dh) + '% a.a.'; }, '% a.a.') });
 
     if (refMMWindow > 0 && devDatasets.length) {
       el('devSection').style.display = 'block';
@@ -793,8 +796,10 @@ function parseWide(text) {
 // Colunas ausentes no CSV são simplesmente ignoradas.
 var LONG_COLS = { taxa: 'taxa_pct_aa', pu: 'pu', du: 'du', duration: 'duration_du', duration_mod: 'duration_mod',
                   taxa_di: 'taxa_di', casada: 'casada_bps', real_basis: 'real_basis_bps', pct_cdi: 'pct_cdi',
-                  taxa_di_dur: 'taxa_di_dur', implicita: 'implicita_pct', di_extrap: 'di_extrapolado' };
-function parseLong(text) {
+                  taxa_di_dur: 'taxa_di_dur', implicita: 'implicita_pct', di_extrap: 'di_extrapolado',
+                  taxa_over: 'taxa_over', cdi: 'cdi_pct_aa', pct_cdi_proj: 'pct_cdi_proj', di_interp: 'di_interpolado' };
+function parseLong(text, opts) {
+  opts = opts || {};
   var lines = text.split(/\r?\n/).filter(function(l) { return l.trim() !== ''; });
   if (lines.length < 2) { throw new Error('CSV vazio'); }
   var header = parseLine(lines[0]), ix = {};
@@ -809,7 +814,7 @@ function parseLong(text) {
     keys.forEach(function(k) {
       var n = toNum(row[ix[LONG_COLS[k]]]);
       if (n === null) { return; }
-      if (k === 'taxa' && !(n > 0 && n < 100)) { return; }
+      if (k === 'taxa' && !(n < 100 && (n > 0 || (opts.allowNeg && n > -50)))) { return; }
       (M[k][d] = M[k][d] || {})[v] = n;
     });
   }
@@ -866,7 +871,8 @@ function makeResumoTab(opts) {
   var ms = opts.metrics;
   var grid = ms.length === 4 ? 'grid2' : 'grid3';
   var deltaUnits = [];
-  ms.forEach(function(k) { var d = METRICS[k].delta; if (d && deltaUnits.indexOf(d.unit) < 0) { deltaUnits.push(d.unit); } });
+  function DEF(k) { return (opts.defs && opts.defs[k]) || METRICS[k]; }
+  ms.forEach(function(k) { var d = DEF(k).delta; if (d && deltaUnits.indexOf(d.unit) < 0) { deltaUnits.push(d.unit); } });
   var tab = {
     id: 'res', label: '&Uacute;ltimos 5 dias',
     html:
@@ -874,13 +880,13 @@ function makeResumoTab(opts) {
         '<div class="info-box" id="{P}-resInfo"></div>' +
         '<div class="legend" id="{P}-resLeg" style="margin-bottom:0"></div></div>' +
       '<div class="' + grid + '">' + ms.map(function(k) {
-        var t = (opts.titulos && opts.titulos[k]) || METRICS[k].titulo;
+        var t = (opts.titulos && opts.titulos[k]) || DEF(k).titulo;
         return '<div class="card"><div class="lbl">' + t + '</div><div class="chart-wrap" style="height:280px"><canvas id="{P}-res-' + k + '"></canvas></div></div>';
       }).join('') + '</div>' +
       '<div class="card" style="margin-top:16px"><div class="lbl">Varia&ccedil;&atilde;o no per&iacute;odo</div>' +
         '<div class="tbl-wrap" id="{P}-resTbl"></div>' +
         '<div class="dev-hint" style="margin-top:8px">&Delta; = valor na data mais recente &minus; valor na data mais antiga da janela. ' +
-        'Taxa, casada e real basis em bps; % do CDI em pontos percentuais.</div></div>',
+        (opts.deltaNote || 'Taxa, casada e real basis em bps; % do CDI em pontos percentuais.') + '</div></div>',
     render: function(mod) {
       var dates = lastDatesWith(mod, 'taxa', N_DIAS);
       var d0 = dates[dates.length - 1], dI = dates[0];
@@ -893,7 +899,7 @@ function makeResumoTab(opts) {
       }).join('');
 
       ms.forEach(function(k) {
-        var def = METRICS[k];
+        var def = DEF(k);
         var ds = dates.map(function(d, i) {
           var c = RAMP[RAMP.length - dates.length + i], last = i === dates.length - 1;
           return { label: fmt(d), data: venc.map(function(v) { return metricVal(mod, k, d, v); }),
@@ -907,7 +913,7 @@ function makeResumoTab(opts) {
       // Tabela
       var h = '<table class="tbl"><thead><tr><th>Vencimento</th><th>DU</th>' + (opts.durationCol ? '<th>Duration (DU)</th>' : '');
       ms.forEach(function(k) {
-        var def = METRICS[k];
+        var def = DEF(k);
         h += '<th class="grp">' + def.label + '</th>' + (def.delta ? '<th>&Delta; (' + def.delta.unit + ')</th>' : '');
         if (k === 'taxa') { h += '<th class="grp">DI1</th>'; }
       });
@@ -916,7 +922,7 @@ function makeResumoTab(opts) {
         h += '<tr><td>' + fmt(v) + '</td><td>' + (mod.getVencDU(v, d0) || '') + '</td>';
         if (opts.durationCol) { var du = metricVal(mod, 'duration', d0, v); h += '<td>' + (du !== null ? du.toFixed(0) : '&ndash;') + '</td>'; }
         ms.forEach(function(k) {
-          var def = METRICS[k], x0 = metricVal(mod, k, d0, v), xI = metricVal(mod, k, dI, v);
+          var def = DEF(k), x0 = metricVal(mod, k, d0, v), xI = metricVal(mod, k, dI, v);
           h += '<td class="grp">' + (x0 !== null ? def.cell(x0) : '&ndash;') + '</td>';
           if (def.delta) { h += '<td>' + fmtDelta(x0 !== null && xI !== null ? (x0 - xI) * def.delta.mult : null, def.delta.unit) + '</td>'; }
           if (k === 'taxa') { var di = metricVal(mod, 'taxa_di', d0, v); h += '<td class="grp">' + (di !== null ? di.toFixed(2) + '%' : '&ndash;') + '</td>'; }
@@ -934,6 +940,8 @@ function makeResumoTab(opts) {
 function makeSpreadTab(opts) {
   var sel = null;   // vencimentos selecionados (estado próprio de cada título)
   var ms = opts.metrics;
+  function DEF(k) { return (opts.defs && opts.defs[k]) || METRICS[k]; }
+  var CH = opts.semTaxa ? ms.slice() : ms.concat(['taxa']);   // gráficos desenhados
   var tab = {
     id: 'spr', label: opts.label,
     html:
@@ -947,12 +955,13 @@ function makeSpreadTab(opts) {
         '<div class="dev-hint" id="{P}-sprHint" style="margin-top:10px"></div></div>' +
       '<div class="card"><div class="legend" id="{P}-sprLeg"></div>' +
         ms.map(function(k, i) {
-          return '<div class="lbl" style="margin-top:' + (i ? 22 : 6) + 'px">' + (opts.titulos[k] || METRICS[k].titulo) + '</div>' +
+          return '<div class="lbl" style="margin-top:' + (i ? 22 : 6) + 'px">' + (opts.titulos[k] || DEF(k).titulo) + '</div>' +
                  '<div class="chart-wrap" style="height:300px"><canvas id="{P}-spr-' + k + '"></canvas></div>';
         }).join('') +
+        (opts.semTaxa ? '' :
         '<div class="lbl" style="margin-top:22px">Taxa ' + opts.nomeTitulo + ' vs DI1 (% a.a.)</div>' +
         '<div class="dev-hint">Linha cheia = ' + opts.nomeTitulo + ' (ANBIMA) &middot; tracejada = DI1 (B3) do vencimento equivalente</div>' +
-        '<div class="chart-wrap" style="height:300px"><canvas id="{P}-spr-taxa"></canvas></div>' +
+        '<div class="chart-wrap" style="height:300px"><canvas id="{P}-spr-taxa"></canvas></div>') +
       '</div>',
     render: function(mod) {
       mod.el('sprPeriod').onchange = function() { tab.render(mod); };
@@ -961,7 +970,7 @@ function makeSpreadTab(opts) {
       var datesDI = mod.dates.filter(function(d) { return ref[d] && Object.keys(ref[d]).length; });
       if (!datesDI.length) {
         mod.el('sprHint').textContent = 'Nenhum dado de spread no arquivo.';
-        ms.concat(['taxa']).forEach(function(k) { mod.killChart('spr-' + k); });
+        CH.forEach(function(k) { mod.killChart('spr-' + k); });
         return;
       }
       var d0 = datesDI[datesDI.length - 1];
@@ -988,8 +997,8 @@ function makeSpreadTab(opts) {
 
       var dates = periodFilter(datesDI, parseInt(mod.el('sprPeriod').value, 10) || 0);
       var showMM = mod.el('sprMM').checked;
-      mod.el('sprHint').textContent = 'Dados de spread disponíveis de ' + fmt(datesDI[0]) + ' a ' + fmt(d0) +
-        ' (início do histórico de DI1 na base B3). Clique nos vencimentos para ligar/desligar.';
+      mod.el('sprHint').textContent = (opts.hint || 'Dados de spread disponíveis de {ini} a {fim} (início do histórico de DI1 na base B3).')
+        .replace('{ini}', fmt(datesDI[0])).replace('{fim}', fmt(d0)) + ' Clique nos vencimentos para ligar/desligar.';
       var keep = subsample(dates.length, 400);
       var lbls = keep.map(function(i) { return fmt(dates[i]); });
       // séries no histórico inteiro (MM sem "aquecimento" no início do período) e corte depois
@@ -997,7 +1006,7 @@ function makeSpreadTab(opts) {
       function series(k, v) { return datesDI.map(function(d) { return metricVal(mod, k, d, v); }); }
       function sub(arr) { return keep.map(function(i) { return arr[i + off]; }); }
 
-      var DS = {}; ms.concat(['taxa']).forEach(function(k) { DS[k] = []; });
+      var DS = {}; CH.forEach(function(k) { DS[k] = []; });
       sel.forEach(function(v) {
         var c = colorOf(v), lab = fmt(v);
         var base = { borderColor: c, backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, pointHoverRadius: 4, tension: 0.2, spanGaps: false };
@@ -1007,15 +1016,17 @@ function makeSpreadTab(opts) {
           DS[k].push(Object.assign({ label: lab, data: sub(s) }, base));
           if (showMM) { DS[k].push(Object.assign({ label: 'MM21 ' + lab, data: sub(movingAvg(s, 21)) }, mmBase)); }
         });
+        if (!opts.semTaxa) {
         DS.taxa.push(Object.assign({ label: opts.nomeTitulo + ' ' + lab, data: sub(series('taxa', v)) }, base));
         DS.taxa.push(Object.assign({ label: 'DI1 ' + lab, data: sub(series('taxa_di', v)) }, base, { borderDash: [5,3], borderWidth: 1.5 }));
+        }
       });
       mod.el('sprLeg').innerHTML = sel.map(function(v) {
         return '<div class="li"><div class="ld" style="background:' + colorOf(v) + '"></div><span>' + fmt(v) + '</span></div>';
       }).join('') + (showMM ? '<div class="li"><div class="ld-dash" style="border-color:#807C7B"></div><span>MM 21 dias</span></div>' : '');
 
-      ms.concat(['taxa']).forEach(function(k) {
-        mod.chart('spr-' + k, 'spr-' + k, { type: 'line', data: { labels: lbls, datasets: DS[k] }, options: lineOptions(METRICS[k].fmt, METRICS[k].unit) });
+      CH.forEach(function(k) {
+        mod.chart('spr-' + k, 'spr-' + k, { type: 'line', data: { labels: lbls, datasets: DS[k] }, options: lineOptions(DEF(k).fmt, DEF(k).unit) });
       });
     }
   };
@@ -1098,9 +1109,57 @@ var NTNF = CurveModule({
 });
 
 // ══════════════════════════════════════════════════════
+// LFT
+// ══════════════════════════════════════════════════════
+var LFT_DEFS = {
+  taxa:         { key: 'taxa', label: 'Taxa ANBIMA', titulo: 'Taxa ANBIMA (% a.a. sobre a Selic)', unit: '% a.a.',
+                  fmt: function(v, ax) { return ax ? v.toFixed(3) + '%' : v.toFixed(4) + '% a.a.'; },
+                  cell: function(v) { return v.toFixed(4) + '%'; }, delta: { mult: 100, unit: 'bps' } },
+  taxa_over:    { key: 'taxa_over', label: 'Taxa over', titulo: 'Taxa over (% a.m.)', unit: '% a.m.',
+                  fmt: function(v, ax) { return ax ? v.toFixed(4) + '%' : v.toFixed(5) + '% a.m.'; },
+                  cell: function(v) { return v.toFixed(5) + '%'; }, delta: null },   // varia junto com a taxa; Δ seria ~0
+  pct_cdi:      { key: 'pct_cdi', label: '% CDI corrente', titulo: '% do CDI corrente', unit: '% CDI',
+                  fmt: function(v, ax) { return ax ? v.toFixed(2) + '%' : v.toFixed(3) + '% CDI'; },
+                  cell: function(v) { return v.toFixed(3) + '%'; }, delta: { mult: 1, unit: 'p.p.' } },
+  pct_cdi_proj: { key: 'pct_cdi_proj', label: '% CDI projetado', titulo: '% do CDI projetado (DI do vencimento)', unit: '% CDI', semDadoHint: SEM_DI,
+                  fmt: function(v, ax) { return ax ? v.toFixed(2) + '%' : v.toFixed(3) + '% CDI'; },
+                  cell: function(v) { return v.toFixed(3) + '%'; }, delta: { mult: 1, unit: 'p.p.' } },
+  taxa_di:      { key: 'taxa_di', label: 'DI do vencimento', titulo: 'DI1 do vencimento (% a.a.)', unit: '% a.a.', semDadoHint: SEM_DI,
+                  fmt: function(v, ax) { return ax ? v.toFixed(2) + '%' : v.toFixed(2) + '% a.a.'; },
+                  cell: function(v) { return v.toFixed(2) + '%'; }, delta: { mult: 100, unit: 'bps' } }
+};
+var LFT = CurveModule({
+  key: 'lft', nome: 'LFT', root: 'mp-lft', csvUrl: 'dados/lft.csv',
+  parse: function(t) { return parseLong(t, { allowNeg: true }); },
+  defaultTab: 'res',
+  tabOrder: ['res', 'curva', 'fwd', 'hist', 'spr', 'dados'],
+  curveMetrics: [LFT_DEFS.taxa, LFT_DEFS.taxa_over, LFT_DEFS.pct_cdi, LFT_DEFS.pct_cdi_proj, LFT_DEFS.taxa_di],
+  fwdBases: [{ key: 'taxa', label: 'Taxa ANBIMA', short: '', rate: 'taxa', prazo: 'du', prazoLbl: 'DU', allowNeg: true, dec: 4 }],
+  extraTabs: [
+    makeResumoTab({ metrics: ['taxa', 'taxa_over', 'pct_cdi', 'pct_cdi_proj'], defs: LFT_DEFS,
+                    deltaNote: 'Taxa em bps; % do CDI em pontos percentuais.' }),
+    makeSpreadTab({ label: '% CDI corrente &amp; projetado', nomeTitulo: 'LFT', metrics: ['pct_cdi', 'pct_cdi_proj'], defs: LFT_DEFS, semTaxa: true,
+                    hint: '% do CDI corrente disponível de {ini} a {fim}; o projetado depende do DI1 (desde fev/2025).',
+                    titulos: { pct_cdi: '% do CDI corrente &mdash; spread da LFT sobre o CDI do dia (BCB, s&eacute;rie 4389)',
+                               pct_cdi_proj: '% do CDI projetado &mdash; spread da LFT sobre o DI1 do mesmo vencimento' } })
+  ],
+  fwdNote: 'Na LFT a &ldquo;taxa&rdquo; &eacute; o &aacute;gio/des&aacute;gio sobre a Selic; o forward &eacute; o spread impl&iacute;cito entre dois vencimentos (pode ser negativo).',
+  formatoHtml: '<b>Formato longo:</b> uma linha por data_referencia &times; data_vencimento<br>' +
+               '<b>Colunas:</b> data_referencia, data_vencimento, taxa_pct_aa, pu, du, duration_du, taxa_over, cdi_pct_aa, pct_cdi, taxa_di, pct_cdi_proj, di_interpolado<br>' +
+               '<b>Taxa over</b> = ((1+tx)<sup>1/252</sup> &minus; 1) &times; 3000 &middot; ' +
+               '<b>% CDI</b> = [(1+tx)<sup>1/252</sup>&middot;(1+CDI)<sup>1/252</sup> &minus; 1] / [(1+CDI)<sup>1/252</sup> &minus; 1] &middot; ' +
+               '<b>% CDI proj.</b> = mesma conta com o DI1 do vencimento no lugar do CDI',
+  extraStatus: function(mod) {
+    var s = mod.M.cdi || {}, ds = mod.dates.filter(function(d) { return s[d] && Object.keys(s[d]).length; });
+    var d = ds[ds.length - 1], v = d ? s[d][Object.keys(s[d])[0]] : null;
+    return [['CDI (' + (d ? fmt(d) : '&ndash;') + ')', v !== null ? v.toFixed(2) + '%' : '&ndash;']];
+  }
+});
+
+// ══════════════════════════════════════════════════════
 // ABAS PRINCIPAIS E CARGA
 // ══════════════════════════════════════════════════════
-var MODULES = { ntnb: NTNB, ltn: LTN, ntnf: NTNF };
+var MODULES = { ntnb: NTNB, ltn: LTN, ntnf: NTNF, lft: LFT };
 document.querySelectorAll('.main-tab-btn').forEach(function(b) {
   b.addEventListener('click', function() {
     var k = this.getAttribute('data-main');
