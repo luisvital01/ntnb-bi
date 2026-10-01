@@ -323,6 +323,11 @@ function CurveModule(cfg) {
   };
   mod.killChart = function(name) { if (mod.charts[name]) { mod.charts[name].destroy(); delete mod.charts[name]; } };
 
+  var basesCfg = cfg.fwdBases || [];
+  function baseSelectHtml(id) {
+    return basesCfg.length > 1 ? '<label style="font-size:13px;color:#5a6a7a;font-weight:500">Base:</label><select id="' + P + '-' + id + '">' +
+      basesCfg.map(function(b) { return '<option value="' + b.key + '">' + b.label + '</option>'; }).join('') + '</select>' : '';
+  }
   var metrics = cfg.curveMetrics || [{ key: 'taxa', label: 'Taxa', unit: '% a.a.', fmt: function(v) { return v.toFixed(2) + '%'; } }];
   var tabs = [
     { id: 'dados', label: 'Dados' },
@@ -360,7 +365,7 @@ function CurveModule(cfg) {
 
   h += '<div class="pane" id="' + P + '-pn-fwd">' +
     '<div class="card"><div class="ctrl-row" style="margin-bottom:12px"><label>Data de refer&ecirc;ncia:</label>' +
-      '<input type="date" class="date-input" id="' + P + '-fwdDate"></div>' +
+      '<input type="date" class="date-input" id="' + P + '-fwdDate">' + baseSelectHtml('fwdBase') + '</div>' +
       '<div class="info-box" id="' + P + '-fwdInfo">Carregue dados para ver a matriz.</div></div>' +
     '<div class="card"><div class="lbl">Matriz de forwards (DU/252) &mdash; clique numa c&eacute;lula para acompanhar no tempo</div>' +
       '<div class="mx-wrap"><div id="' + P + '-mxContainer"><div class="nodata"><span class="nd-icon">&#8862;</span>Carregue dados para ver a matriz</div></div></div></div>' +
@@ -380,6 +385,7 @@ function CurveModule(cfg) {
       '<select id="' + P + '-histFrom" style="min-width:150px"></select>' +
       '<label style="font-size:13px;color:#5a6a7a;font-weight:500">At&eacute;:</label>' +
       '<select id="' + P + '-histTo" style="min-width:150px"></select>' +
+      baseSelectHtml('histBase') +
       '<button class="btnp" id="' + P + '-btnAddFwd">+ Adicionar</button></div></div>' +
     '<div class="card"><div class="ctrl-row" style="margin-bottom:14px"><label>Per&iacute;odo:</label>' +
       '<select id="' + P + '-histPeriod"><option value="0">Todo o hist&oacute;rico</option><option value="365">&Uacute;ltimo ano</option>' +
@@ -430,6 +436,7 @@ function CurveModule(cfg) {
   el('btnAddDate').addEventListener('click', addDate);
   if (el('curvaMetric')) { el('curvaMetric').addEventListener('change', renderCurva); }
   el('fwdDate').addEventListener('change', renderForward);
+  if (el('fwdBase')) { el('fwdBase').addEventListener('change', renderForward); }
   el('btnAddFwd').addEventListener('click', addFwdFromSelects);
   el('histPeriod').addEventListener('change', renderHist);
   ['chk-sd1','chk-sd2','chk-mm21','chk-mm42','chk-mm63'].forEach(function(id) { el(id).addEventListener('change', renderHist); });
@@ -454,12 +461,25 @@ function CurveModule(cfg) {
     return ds[lo];
   }
   mod.nearestDate = nearestDate;
-  function getFwdValue(date, from, to) {
-    var row = mod.DB[date];
-    if (!row || row[from] === undefined || row[to] === undefined) { return null; }
-    return calcFwdDU(row[from], row[to], getVencDU(from, date), getVencDU(to, date));
+  // Bases de forward: cada uma diz qual taxa usar e qual prazo (DU até o vencimento ou duration)
+  var bases = cfg.fwdBases || [{ key: 'taxa', label: 'Taxa', short: '', rate: 'taxa', prazo: 'du', prazoLbl: 'DU' }];
+  mod.bases = bases;
+  function baseOf(k) { return bases.filter(function(b) { return b.key === k; })[0] || bases[0]; }
+  function prazoOf(base, v, date) {
+    if (getVencDU(v, date) === null) { return null; }
+    if (base.prazo === 'du') { return getVencDU(v, date); }
+    var s = mod.M[base.prazo] || {}, x = s[date] ? s[date][v] : undefined;
+    return (x !== undefined && x > 0) ? x : null;
   }
-
+  function activeVencBase(base, date) {
+    var row = (mod.M[base.rate] || {})[date]; if (!row) { return []; }
+    return mod.ALL_VENC.filter(function(v) { return row[v] !== undefined && prazoOf(base, v, date) !== null; });
+  }
+  function getFwdValue(date, from, to, bk) {
+    var base = baseOf(bk), row = (mod.M[base.rate] || {})[date];
+    if (!row || row[from] === undefined || row[to] === undefined) { return null; }
+    return calcFwdDU(row[from], row[to], prazoOf(base, from, date), prazoOf(base, to, date));
+  }
   mod.load = function() {
     return fetch(cfg.csvUrl + '?t=' + Date.now())
       .then(function(r) { if (!r.ok) { throw new Error('HTTP ' + r.status + ' em ' + cfg.csvUrl); } return r.text(); })
@@ -575,11 +595,14 @@ function CurveModule(cfg) {
       container.innerHTML = '<div class="nodata"><span class="nd-icon">&#8862;</span>Carregue dados para ver a matriz</div>';
       return;
     }
-    var venc = activeVenc(date);
-    var rates = venc.map(function(v) { return mod.DB[date][v]; });
-    var dus = venc.map(function(v) { return getVencDU(v, date); });
-    info.textContent = 'Data: ' + fmt(date) + aviso + ' · ' + venc.length + ' vencimentos ativos · DU/252 · Clique numa célula para acompanhar';
-    if (venc.length < 2) { container.innerHTML = '<div class="nodata"><span class="nd-icon">&#8862;</span>Menos de 2 vencimentos nesta data</div>'; return; }
+    var base = baseOf(el('fwdBase') ? el('fwdBase').value : null);
+    var venc = activeVencBase(base, date);
+    var rates = venc.map(function(v) { return mod.M[base.rate][date][v]; });
+    var dus = venc.map(function(v) { return prazoOf(base, v, date); });
+    var flag = base.flag ? (mod.M[base.flag] || {})[date] || {} : {};
+    info.innerHTML = 'Data: ' + fmt(date) + aviso + ' · Base: ' + base.label + ' · ' + venc.length + ' vencimentos · prazo = ' +
+      (base.prazo === 'du' ? 'DU até o vencimento' : 'duration de Macaulay (DU)') + ' · Clique numa célula para acompanhar';
+    if (venc.length < 2) { container.innerHTML = '<div class="nodata"><span class="nd-icon">&#8862;</span>' + (base.semDado || 'Menos de 2 vencimentos nesta data') + '</div>'; return; }
     var allFwd = [], matrix = [], i, j;
     for (i = 0; i < venc.length; i++) {
       matrix[i] = [];
@@ -594,17 +617,18 @@ function CurveModule(cfg) {
     function cc(v) { var n = (v - minF) / rng; return n > 0.66 ? 'ch' : n > 0.33 ? 'cm' : 'cl'; }
     var html = '<table class="mx"><thead><tr><th>&#8595; De / At&eacute; &#8594;</th>';
     venc.forEach(function(v, j) {
-      html += '<th>' + fmt(v) + '<br><span style="font-weight:400;font-size:9px;color:#8a9bb0">' + dus[j] + ' DU</span></th>';
+      html += '<th>' + fmt(v) + '<br><span style="font-weight:400;font-size:9px;color:#8a9bb0">' + Math.round(dus[j]) + ' ' + base.prazoLbl + '</span></th>';
     });
     html += '</tr></thead><tbody>';
     venc.forEach(function(vi, i) {
-      html += '<tr><td class="rl">' + fmt(vi) + '<br><span style="font-weight:400;font-size:10px;color:#8a9bb0">' + rates[i].toFixed(2) + '% &middot; ' + dus[i] + ' DU</span></td>';
+      html += '<tr><td class="rl">' + fmt(vi) + (flag[vi] ? ' <span title="DI extrapolado (duration além da curva DI1)" style="color:#BA7517">&#9888;</span>' : '') +
+        '<br><span style="font-weight:400;font-size:10px;color:#8a9bb0">' + rates[i].toFixed(2) + '% &middot; ' + Math.round(dus[i]) + ' ' + base.prazoLbl + '</span></td>';
       venc.forEach(function(vj, j) {
         if (i === j) { html += '<td class="cd">&mdash;</td>'; }
         else if (i > j) { html += '<td class="cn">&middot;</td>'; }
         else {
           var v2 = matrix[i][j]; if (v2 === null) { html += '<td class="cn">&mdash;</td>'; return; }
-          var isTk = mod.tracked.some(function(t) { return t.from === vi && t.to === vj; });
+          var isTk = mod.tracked.some(function(t) { return t.from === vi && t.to === vj && t.base === base.key; });
           html += '<td class="' + cc(v2) + (isTk ? ' tracked' : '') + '" data-from="' + vi + '" data-to="' + vj + '">' + v2.toFixed(2) + '%</td>';
         }
       });
@@ -612,16 +636,18 @@ function CurveModule(cfg) {
     });
     container.innerHTML = html + '</tbody></table>';
     container.querySelectorAll('td[data-from]').forEach(function(td) {
-      td.addEventListener('click', function() { addTrackedFwd(this.getAttribute('data-from'), this.getAttribute('data-to')); });
+      td.addEventListener('click', function() { addTrackedFwd(this.getAttribute('data-from'), this.getAttribute('data-to'), base.key); });
     });
   }
 
   // ── Forwards acompanhados ──
-  function addTrackedFwd(from, to) {
+  function fwdLabel(t) { var b = baseOf(t.base); return (b.short ? b.short + ' ' : '') + fmt(t.from) + ' → ' + fmt(t.to); }
+  function addTrackedFwd(from, to, bk) {
     if (!from || !to || from === to) { return; }
     if (from > to) { var t0 = from; from = to; to = t0; }
-    if (!mod.tracked.some(function(t) { return t.from === from && t.to === to; })) {
-      mod.tracked.push({ from: from, to: to, color: COLORS[mod.tracked.length % COLORS.length] });
+    bk = baseOf(bk).key;
+    if (!mod.tracked.some(function(t) { return t.from === from && t.to === to && t.base === bk; })) {
+      mod.tracked.push({ from: from, to: to, base: bk, color: COLORS[mod.tracked.length % COLORS.length] });
     }
     updateFwdTags();
     mod.showTab('hist');
@@ -636,7 +662,7 @@ function CurveModule(cfg) {
     if (!mod.tracked.length) { c.innerHTML = '<span style="font-size:13px;color:#8a9bb0">Nenhum forward selecionado ainda.</span>'; return; }
     c.innerHTML = mod.tracked.map(function(t, i) {
       return '<div class="ftag" style="background:' + hexA(t.color, 0.08) + ';border-color:' + t.color + ';color:' + t.color + '">' +
-        fmt(t.from) + ' &rarr; ' + fmt(t.to) + '<button data-i="' + i + '" style="color:' + t.color + '">&times;</button></div>';
+        fwdLabel(t) + '<button data-i="' + i + '" style="color:' + t.color + '">&times;</button></div>';
     }).join('');
     c.querySelectorAll('button').forEach(function(btn) {
       btn.addEventListener('click', function() { removeTrackedFwd(parseInt(this.getAttribute('data-i'), 10)); });
@@ -645,7 +671,7 @@ function CurveModule(cfg) {
   function addFwdFromSelects() {
     var from = el('histFrom').value, to = el('histTo').value;
     if (!from || !to || from === to) { alert('Selecione dois vencimentos diferentes.'); return; }
-    addTrackedFwd(from, to);
+    addTrackedFwd(from, to, el('histBase') ? el('histBase').value : null);
   }
   function populateHistSelects() {
     var ativos = mod.dates.length ? activeVenc(mod.dates[mod.dates.length - 1]) : [];
@@ -682,8 +708,8 @@ function CurveModule(cfg) {
     function legOnce(k, html) { if (!legAdded[k]) { legItems.push(html); legAdded[k] = true; } }
 
     mod.tracked.forEach(function(t) {
-      var lbl = fmt(t.from) + ' → ' + fmt(t.to);
-      var mainData = dates.map(function(date) { var v = getFwdValue(date, t.from, t.to); return v !== null ? parseFloat(v.toFixed(4)) : null; });
+      var lbl = fwdLabel(t);
+      var mainData = dates.map(function(date) { var v = getFwdValue(date, t.from, t.to, t.base); return v !== null ? parseFloat(v.toFixed(4)) : null; });
       var mm21 = (showMM21 || refMMWindow === 21) ? movingAvg(mainData, 21) : null;
       var mm42 = (showMM42 || refMMWindow === 42) ? movingAvg(mainData, 42) : null;
       var mm63 = (showMM63 || refMMWindow === 63) ? movingAvg(mainData, 63) : null;
@@ -765,7 +791,8 @@ function parseWide(text) {
 // Formato longo (LTN, NTN-F): data_referencia, data_vencimento, métrica1, métrica2, ...
 // Colunas ausentes no CSV são simplesmente ignoradas.
 var LONG_COLS = { taxa: 'taxa_pct_aa', pu: 'pu', du: 'du', duration: 'duration_du', duration_mod: 'duration_mod',
-                  taxa_di: 'taxa_di', casada: 'casada_bps', real_basis: 'real_basis_bps', pct_cdi: 'pct_cdi' };
+                  taxa_di: 'taxa_di', casada: 'casada_bps', real_basis: 'real_basis_bps', pct_cdi: 'pct_cdi',
+                  taxa_di_dur: 'taxa_di_dur', implicita: 'implicita_pct', di_extrap: 'di_extrapolado' };
 function parseLong(text) {
   var lines = text.split(/\r?\n/).filter(function(l) { return l.trim() !== ''; });
   if (lines.length < 2) { throw new Error('CSV vazio'); }
@@ -789,16 +816,6 @@ function parseLong(text) {
 }
 
 // ══════════════════════════════════════════════════════
-// NTN-B
-// ══════════════════════════════════════════════════════
-var NTNB = CurveModule({
-  key: 'ntnb', nome: 'NTN-B', root: 'mp-ntnb', csvUrl: 'dados/ntnb_export.csv', parse: parseWide,
-  formatoHtml: '<b>Coluna A:</b> data_referencia em formato AAAA-MM-DD<br>' +
-               '<b>Colunas B+:</b> cabe&ccedil;alho = data de vencimento do papel (AAAA-MM-DD ou DD/MM/AAAA)<br>' +
-               '<b>Valores:</b> taxa indicativa ANBIMA em % a.a. &middot; C&eacute;lulas vazias = papel n&atilde;o existia naquela data'
-});
-
-// ══════════════════════════════════════════════════════
 // MÉTRICAS E ABAS EXTRAS (reutilizadas por LTN e NTN-F)
 // ══════════════════════════════════════════════════════
 var N_DIAS = 5;
@@ -817,6 +834,12 @@ var METRICS = {
   pct_cdi:    { key: 'pct_cdi', label: '% do CDI', titulo: '% do CDI', unit: '% CDI', semDadoHint: SEM_DI,
                 fmt: function(v, ax) { return ax ? v.toFixed(1) + '%' : v.toFixed(2) + '% CDI'; },
                 cell: function(v) { return v.toFixed(2) + '%'; }, delta: { mult: 1, unit: 'p.p.' } },
+  implicita:  { key: 'implicita', label: 'Infla&ccedil;&atilde;o impl&iacute;cita', titulo: 'Infla&ccedil;&atilde;o impl&iacute;cita (% a.a.)', unit: '% a.a.', semDadoHint: SEM_DI,
+                fmt: function(v, ax) { return ax ? v.toFixed(2) + '%' : v.toFixed(2) + '% a.a.'; },
+                cell: function(v) { return v.toFixed(2) + '%'; }, delta: { mult: 100, unit: 'bps' } },
+  taxa_di_dur:{ key: 'taxa_di_dur', label: 'DI na duration', titulo: 'DI1 interpolado na duration (% a.a.)', unit: '% a.a.', semDadoHint: SEM_DI,
+                fmt: function(v, ax) { return ax ? v.toFixed(2) + '%' : v.toFixed(2) + '% a.a.'; },
+                cell: function(v) { return v.toFixed(2) + '%'; }, delta: { mult: 100, unit: 'bps' } },
   duration:   { key: 'duration', label: 'Duration (DU)', titulo: 'Duration de Macaulay (DU)', unit: 'DU',
                 fmt: function(v, ax) { return ax ? v.toFixed(0) : v.toFixed(1) + ' DU'; },
                 cell: function(v) { return v.toFixed(0); }, delta: null }
@@ -1001,6 +1024,29 @@ function casadaDesde(mod) {
   var s = mod.M.casada || {}, ds = mod.dates.filter(function(d) { return s[d] && Object.keys(s[d]).length; });
   return [['Casada desde', ds.length ? fmt(ds[0]) : '&ndash;']];
 }
+
+// ══════════════════════════════════════════════════════
+// NTN-B
+// ══════════════════════════════════════════════════════
+var NTNB = CurveModule({
+  key: 'ntnb', nome: 'NTN-B', root: 'mp-ntnb', csvUrl: 'dados/ntnb.csv', parse: parseLong,
+  curveMetrics: [METRICS.taxa, METRICS.implicita, METRICS.taxa_di_dur, METRICS.duration],
+  fwdBases: [
+    { key: 'taxa', label: 'Taxa real', short: '', rate: 'taxa', prazo: 'du', prazoLbl: 'DU' },
+    { key: 'implicita', label: 'Infla&ccedil;&atilde;o impl&iacute;cita', short: 'Impl.', rate: 'implicita', prazo: 'duration', prazoLbl: 'Dur',
+      flag: 'di_extrap', semDado: 'Sem infla&ccedil;&atilde;o impl&iacute;cita nesta data (DI1 da B3 dispon&iacute;vel a partir de fev/2025)' }
+  ],
+  fwdNote: '<b>Base taxa real:</b> du = DU at&eacute; o vencimento. <b>Base impl&iacute;cita:</b> du = duration de Macaulay (DU) de cada vencimento &mdash; ' +
+           '&eacute; o ponto onde o DI foi interpolado, ent&atilde;o &eacute; onde a impl&iacute;cita est&aacute; definida.<br>' +
+           '&#9888; = DI extrapolado (duration al&eacute;m do &uacute;ltimo vencimento de DI1).',
+  formatoHtml: '<b>Formato longo:</b> uma linha por data_referencia &times; data_vencimento<br>' +
+               '<b>Colunas:</b> data_referencia, data_vencimento, taxa_pct_aa, pu, du, duration_du, duration_mod, taxa_di_dur, implicita_pct, di_extrapolado<br>' +
+               '<b>Impl&iacute;cita</b> = (1 + DI1 interpolado na duration) / (1 + taxa real NTN-B) &minus; 1 &middot; interpola&ccedil;&atilde;o flat forward na curva DI1 (B3)',
+  extraStatus: function(mod) {
+    var s = mod.M.implicita || {}, ds = mod.dates.filter(function(d) { return s[d] && Object.keys(s[d]).length; });
+    return [['Impl&iacute;cita desde', ds.length ? fmt(ds[0]) : '&ndash;']];
+  }
+});
 
 // ══════════════════════════════════════════════════════
 // LTN
