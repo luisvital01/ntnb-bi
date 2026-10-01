@@ -92,6 +92,7 @@ select:focus { border-color: #185FA5; }
 .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
 .grid3 .card { margin-bottom: 0; }
 .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 16px; }
+.grid2 + .card, .grid3 + .card { margin-top: 16px; }
 .grid2 .card { margin-bottom: 0; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { font-size: 12px; font-weight: 500; padding: 5px 11px; border-radius: 6px; border: 1.5px solid #c8d4e0; background: #fff; color: #5a6a7a; cursor: pointer; user-select: none; }
@@ -118,7 +119,7 @@ select:focus { border-color: #185FA5; }
 <div class="topbar">
   <div class="topbar-info">
     <h1>BI de Títulos Públicos</h1>
-    <p>NTN-B &middot; LTN &middot; Curvas de juros &middot; Forwards DU/252 &middot; Calend&aacute;rio ANBIMA</p>
+    <p>NTN-B &middot; LTN &middot; NTN-F &middot; Curvas de juros &middot; Forwards DU/252 &middot; Calend&aacute;rio ANBIMA</p>
   </div>
   <div class="topbar-right">
     <span class="refresh-status" id="refreshStatus"></span>
@@ -130,9 +131,11 @@ select:focus { border-color: #185FA5; }
   <div class="main-tabs">
     <button class="main-tab-btn active" data-main="ntnb">NTN-B</button>
     <button class="main-tab-btn" data-main="ltn">LTN</button>
+    <button class="main-tab-btn" data-main="ntnf">NTN-F</button>
   </div>
   <div class="main-pane active" id="mp-ntnb"></div>
   <div class="main-pane" id="mp-ltn"></div>
+  <div class="main-pane" id="mp-ntnf"></div>
 </div>
 
 <script>
@@ -759,24 +762,24 @@ function parseWide(text) {
   return { M: { taxa: taxa } };
 }
 
-// Formato longo (LTN): data_referencia, data_vencimento, métrica1, métrica2, ...
-var LTN_COLS = { taxa: 'taxa_pct_aa', pu: 'pu', du: 'du', duration: 'duration_du', duration_mod: 'duration_mod',
-                 taxa_di: 'taxa_di', casada: 'casada_bps', pct_cdi: 'pct_cdi' };
+// Formato longo (LTN, NTN-F): data_referencia, data_vencimento, métrica1, métrica2, ...
+// Colunas ausentes no CSV são simplesmente ignoradas.
+var LONG_COLS = { taxa: 'taxa_pct_aa', pu: 'pu', du: 'du', duration: 'duration_du', duration_mod: 'duration_mod',
+                  taxa_di: 'taxa_di', casada: 'casada_bps', real_basis: 'real_basis_bps', pct_cdi: 'pct_cdi' };
 function parseLong(text) {
   var lines = text.split(/\r?\n/).filter(function(l) { return l.trim() !== ''; });
   if (lines.length < 2) { throw new Error('CSV vazio'); }
   var header = parseLine(lines[0]), ix = {};
   header.forEach(function(h, i) { ix[h] = i; });
   if (ix.data_referencia === undefined || ix.data_vencimento === undefined) { throw new Error('CSV sem colunas data_referencia/data_vencimento'); }
-  var M = {};
-  Object.keys(LTN_COLS).forEach(function(k) { M[k] = {}; });
+  var M = {}, keys = Object.keys(LONG_COLS).filter(function(k) { return ix[LONG_COLS[k]] !== undefined; });
+  keys.forEach(function(k) { M[k] = {}; });
   for (var r = 1; r < lines.length; r++) {
     var row = parseLine(lines[r]);
     var d = toDateISO(row[ix.data_referencia]), v = toDateISO(row[ix.data_vencimento]);
     if (!d || !v) { continue; }
-    Object.keys(LTN_COLS).forEach(function(k) {
-      var c = ix[LTN_COLS[k]]; if (c === undefined) { return; }
-      var n = toNum(row[c]);
+    keys.forEach(function(k) {
+      var n = toNum(row[ix[LONG_COLS[k]]]);
       if (n === null) { return; }
       if (k === 'taxa' && !(n > 0 && n < 100)) { return; }
       (M[k][d] = M[k][d] || {})[v] = n;
@@ -796,16 +799,27 @@ var NTNB = CurveModule({
 });
 
 // ══════════════════════════════════════════════════════
-// LTN — abas extras
+// MÉTRICAS E ABAS EXTRAS (reutilizadas por LTN e NTN-F)
 // ══════════════════════════════════════════════════════
 var N_DIAS = 5;
 var RAMP = ['#c6dbef', '#9ecae1', '#6baed6', '#3182bd', '#0d1b2a'];   // D-4 (claro) → D0 (escuro)
-var LTN_METRICS = {
-  taxa:    { key: 'taxa',    label: 'Taxa',    unit: '% a.a.', fmt: function(v, ax) { return ax ? v.toFixed(2) + '%' : v.toFixed(2) + '% a.a.'; }, dec: 4, deltaUnit: 'bps', deltaMult: 100 },
-  casada:  { key: 'casada',  label: 'Casada',  unit: 'bps',    fmt: function(v, ax) { return ax ? v.toFixed(0) : v.toFixed(1) + ' bps'; }, dec: 1, deltaUnit: 'bps', deltaMult: 1,
-             semDadoHint: 'DI1 da B3 disponível a partir de fev/2025' },
-  pct_cdi: { key: 'pct_cdi', label: '% do CDI', unit: '% CDI', fmt: function(v, ax) { return ax ? v.toFixed(1) + '%' : v.toFixed(2) + '% CDI'; }, dec: 2, deltaUnit: 'p.p.', deltaMult: 1,
-             semDadoHint: 'DI1 da B3 disponível a partir de fev/2025' }
+var SEM_DI = 'DI1 da B3 disponível a partir de fev/2025';
+var METRICS = {
+  taxa:       { key: 'taxa', label: 'Taxa', titulo: 'Taxa (% a.a.)', unit: '% a.a.',
+                fmt: function(v, ax) { return ax ? v.toFixed(2) + '%' : v.toFixed(2) + '% a.a.'; },
+                cell: function(v) { return v.toFixed(2) + '%'; }, delta: { mult: 100, unit: 'bps' } },
+  casada:     { key: 'casada', label: 'Casada', titulo: 'Casada (bps)', unit: 'bps', semDadoHint: SEM_DI,
+                fmt: function(v, ax) { return ax ? v.toFixed(0) : v.toFixed(1) + ' bps'; },
+                cell: function(v) { return v.toFixed(1); }, delta: { mult: 1, unit: 'bps' } },
+  real_basis: { key: 'real_basis', label: 'Real basis', titulo: 'Real basis (bps)', unit: 'bps', semDadoHint: SEM_DI,
+                fmt: function(v, ax) { return ax ? v.toFixed(0) : v.toFixed(1) + ' bps'; },
+                cell: function(v) { return v.toFixed(1); }, delta: { mult: 1, unit: 'bps' } },
+  pct_cdi:    { key: 'pct_cdi', label: '% do CDI', titulo: '% do CDI', unit: '% CDI', semDadoHint: SEM_DI,
+                fmt: function(v, ax) { return ax ? v.toFixed(1) + '%' : v.toFixed(2) + '% CDI'; },
+                cell: function(v) { return v.toFixed(2) + '%'; }, delta: { mult: 1, unit: 'p.p.' } },
+  duration:   { key: 'duration', label: 'Duration (DU)', titulo: 'Duration de Macaulay (DU)', unit: 'DU',
+                fmt: function(v, ax) { return ax ? v.toFixed(0) : v.toFixed(1) + ' DU'; },
+                cell: function(v) { return v.toFixed(0); }, delta: null }
 };
 function lastDatesWith(mod, key, n) {
   var store = mod.M[key] || {}, out = [];
@@ -820,180 +834,226 @@ function fmtDelta(x, unit) {
   var cls = Math.abs(x) < 0.005 ? 'nz' : (x > 0 ? 'up' : 'dn');
   return '<span class="' + cls + '">' + (x > 0 ? '+' : '') + x.toFixed(unit === 'p.p.' ? 2 : 1) + '</span>';
 }
+function metricVal(mod, k, d, v) { var s = mod.M[k] || {}; return s[d] && s[d][v] !== undefined ? s[d][v] : null; }
 
-// ── Últimos 5 dias ──
-var TAB_RESUMO = {
-  id: 'res', label: '&Uacute;ltimos 5 dias',
-  html:
-    '<div class="card"><div class="lbl">Performance dos &uacute;ltimos ' + N_DIAS + ' dias &uacute;teis</div>' +
-      '<div class="info-box" id="{P}-resInfo"></div>' +
-      '<div class="legend" id="{P}-resLeg" style="margin-bottom:0"></div></div>' +
-    '<div class="grid3">' +
-      '<div class="card"><div class="lbl">Taxa (% a.a.)</div><div class="chart-wrap" style="height:280px"><canvas id="{P}-res-taxa"></canvas></div></div>' +
-      '<div class="card"><div class="lbl">Casada (bps &mdash; LTN &minus; DI1)</div><div class="chart-wrap" style="height:280px"><canvas id="{P}-res-casada"></canvas></div></div>' +
-      '<div class="card"><div class="lbl">% do CDI</div><div class="chart-wrap" style="height:280px"><canvas id="{P}-res-pct_cdi"></canvas></div></div>' +
-    '</div>' +
-    '<div class="card" style="margin-top:16px"><div class="lbl">Varia&ccedil;&atilde;o no per&iacute;odo</div>' +
-      '<div class="tbl-wrap" id="{P}-resTbl"></div>' +
-      '<div class="dev-hint" style="margin-top:8px">&Delta; = valor na data mais recente &minus; valor na data mais antiga da janela. Taxa e casada em bps; % do CDI em pontos percentuais.</div></div>',
-  render: function(mod) {
-    var dates = lastDatesWith(mod, 'taxa', N_DIAS);
-    var d0 = dates[dates.length - 1];
-    var venc = mod.activeVenc(d0);
-    mod.el('resInfo').innerHTML = 'Janela: <b>' + fmt(dates[0]) + '</b> a <b>' + fmt(d0) + '</b> &middot; ' + venc.length +
-      ' vencimentos ativos em ' + fmt(d0) + ' &middot; Cada linha &eacute; um dia; a mais escura &eacute; a mais recente.';
-    mod.el('resLeg').innerHTML = dates.map(function(d, i) {
-      var c = RAMP[RAMP.length - dates.length + i];
-      return '<div class="li"><div class="ld" style="background:' + c + ';height:' + (i === dates.length - 1 ? 4 : 3) + 'px"></div><span>' + fmt(d) + '</span></div>';
-    }).join('');
+// ── Aba "Últimos 5 dias" ──
+//   opts.metrics: métricas com gráfico e Δ na tabela · opts.durationCol: mostra coluna de duration
+function makeResumoTab(opts) {
+  var ms = opts.metrics;
+  var grid = ms.length === 4 ? 'grid2' : 'grid3';
+  var deltaUnits = [];
+  ms.forEach(function(k) { var d = METRICS[k].delta; if (d && deltaUnits.indexOf(d.unit) < 0) { deltaUnits.push(d.unit); } });
+  var tab = {
+    id: 'res', label: '&Uacute;ltimos 5 dias',
+    html:
+      '<div class="card"><div class="lbl">Performance dos &uacute;ltimos ' + N_DIAS + ' dias &uacute;teis</div>' +
+        '<div class="info-box" id="{P}-resInfo"></div>' +
+        '<div class="legend" id="{P}-resLeg" style="margin-bottom:0"></div></div>' +
+      '<div class="' + grid + '">' + ms.map(function(k) {
+        var t = (opts.titulos && opts.titulos[k]) || METRICS[k].titulo;
+        return '<div class="card"><div class="lbl">' + t + '</div><div class="chart-wrap" style="height:280px"><canvas id="{P}-res-' + k + '"></canvas></div></div>';
+      }).join('') + '</div>' +
+      '<div class="card" style="margin-top:16px"><div class="lbl">Varia&ccedil;&atilde;o no per&iacute;odo</div>' +
+        '<div class="tbl-wrap" id="{P}-resTbl"></div>' +
+        '<div class="dev-hint" style="margin-top:8px">&Delta; = valor na data mais recente &minus; valor na data mais antiga da janela. ' +
+        'Taxa, casada e real basis em bps; % do CDI em pontos percentuais.</div></div>',
+    render: function(mod) {
+      var dates = lastDatesWith(mod, 'taxa', N_DIAS);
+      var d0 = dates[dates.length - 1], dI = dates[0];
+      var venc = mod.activeVenc(d0);
+      mod.el('resInfo').innerHTML = 'Janela: <b>' + fmt(dI) + '</b> a <b>' + fmt(d0) + '</b> &middot; ' + venc.length +
+        ' vencimentos ativos em ' + fmt(d0) + ' &middot; Cada linha &eacute; um dia; a mais escura &eacute; a mais recente.';
+      mod.el('resLeg').innerHTML = dates.map(function(d, i) {
+        var c = RAMP[RAMP.length - dates.length + i];
+        return '<div class="li"><div class="ld" style="background:' + c + ';height:' + (i === dates.length - 1 ? 4 : 3) + 'px"></div><span>' + fmt(d) + '</span></div>';
+      }).join('');
 
-    ['taxa', 'casada', 'pct_cdi'].forEach(function(k) {
-      var def = LTN_METRICS[k], store = mod.M[k] || {};
-      var ds = dates.map(function(d, i) {
-        var c = RAMP[RAMP.length - dates.length + i], last = i === dates.length - 1;
-        return { label: fmt(d), data: venc.map(function(v) { return store[d] && store[d][v] !== undefined ? store[d][v] : null; }),
-          borderColor: c, backgroundColor: c, borderWidth: last ? 2.5 : 1.5, pointRadius: last ? 3.5 : 2, pointHoverRadius: 5,
-          tension: 0.25, spanGaps: false, order: dates.length - i };
+      ms.forEach(function(k) {
+        var def = METRICS[k];
+        var ds = dates.map(function(d, i) {
+          var c = RAMP[RAMP.length - dates.length + i], last = i === dates.length - 1;
+          return { label: fmt(d), data: venc.map(function(v) { return metricVal(mod, k, d, v); }),
+            borderColor: c, backgroundColor: c, borderWidth: last ? 2.5 : 1.5, pointRadius: last ? 3.5 : 2, pointHoverRadius: 5,
+            tension: 0.25, spanGaps: false, order: dates.length - i };
+        });
+        mod.chart('res-' + k, 'res-' + k, { type: 'line', data: { labels: venc.map(fmtShort), datasets: ds },
+          options: lineOptions(def.fmt, def.unit, function(o) { o.scales.x.ticks.maxRotation = 45; o.scales.x.ticks.maxTicksLimit = 20; }) });
       });
-      mod.chart('res-' + k, 'res-' + k, { type: 'line', data: { labels: venc.map(fmtShort), datasets: ds },
-        options: lineOptions(def.fmt, def.unit, function(o) { o.scales.x.ticks.maxRotation = 45; o.scales.x.ticks.maxTicksLimit = 20; }) });
-    });
 
-    // Tabela
-    var dI = dates[0];
-    function val(k, d, v) { var s = mod.M[k] || {}; return s[d] && s[d][v] !== undefined ? s[d][v] : null; }
-    var h = '<table class="tbl"><thead><tr><th>Vencimento</th><th>DU</th>' +
-      '<th class="grp">Taxa</th><th>&Delta; (bps)</th>' +
-      '<th class="grp">DI1</th><th class="grp">Casada (bps)</th><th>&Delta; (bps)</th>' +
-      '<th class="grp">% CDI</th><th>&Delta; (p.p.)</th></tr></thead><tbody>';
-    venc.forEach(function(v) {
-      var t0 = val('taxa', d0, v), tI = val('taxa', dI, v);
-      var c0 = val('casada', d0, v), cI = val('casada', dI, v);
-      var p0 = val('pct_cdi', d0, v), pI = val('pct_cdi', dI, v);
-      var di = val('taxa_di', d0, v);
-      h += '<tr><td>' + fmt(v) + '</td><td>' + (mod.getVencDU(v, d0) || '') + '</td>' +
-        '<td class="grp">' + (t0 !== null ? t0.toFixed(2) + '%' : '&ndash;') + '</td><td>' + fmtDelta(t0 !== null && tI !== null ? (t0 - tI) * 100 : null, 'bps') + '</td>' +
-        '<td class="grp">' + (di !== null ? di.toFixed(2) + '%' : '&ndash;') + '</td>' +
-        '<td class="grp">' + (c0 !== null ? c0.toFixed(1) : '&ndash;') + '</td><td>' + fmtDelta(c0 !== null && cI !== null ? c0 - cI : null, 'bps') + '</td>' +
-        '<td class="grp">' + (p0 !== null ? p0.toFixed(2) + '%' : '&ndash;') + '</td><td>' + fmtDelta(p0 !== null && pI !== null ? p0 - pI : null, 'p.p.') + '</td></tr>';
-    });
-    mod.el('resTbl').innerHTML = h + '</tbody></table>';
-  }
-};
-
-// ── Casada & %CDI (histórico) ──
-var sprSel = null;   // vencimentos selecionados
-var TAB_SPREAD = {
-  id: 'spr', label: 'Casada &amp; % CDI',
-  html:
-    '<div class="card"><div class="lbl">Vencimentos</div>' +
-      '<div class="chips" id="{P}-sprChips"></div>' +
-      '<div class="ctrl-row" style="margin-top:14px"><label>Per&iacute;odo:</label>' +
-        '<select id="{P}-sprPeriod"><option value="0">Todo o hist&oacute;rico com DI</option><option value="365">&Uacute;ltimo ano</option>' +
-        '<option value="180" selected>&Uacute;ltimos 6 meses</option><option value="90">&Uacute;ltimos 3 meses</option><option value="30">&Uacute;ltimo m&ecirc;s</option></select>' +
-        '<label class="metric-chk"><input type="checkbox" id="{P}-sprMM"><span style="color:#5a6a7a;font-weight:500">MM 21 dias</span></label>' +
-      '</div>' +
-      '<div class="dev-hint" id="{P}-sprHint" style="margin-top:10px"></div></div>' +
-    '<div class="card"><div class="legend" id="{P}-sprLeg"></div>' +
-      '<div class="lbl" style="margin-top:6px">Casada (bps) &mdash; taxa LTN ANBIMA &minus; DI1 ajuste B3</div>' +
-      '<div class="chart-wrap" style="height:300px"><canvas id="{P}-sprCasada"></canvas></div>' +
-      '<div class="lbl" style="margin-top:22px">% do CDI</div>' +
-      '<div class="chart-wrap" style="height:300px"><canvas id="{P}-sprPct"></canvas></div>' +
-      '<div class="lbl" style="margin-top:22px">Taxa LTN vs DI1 (% a.a.)</div>' +
-      '<div class="dev-hint">Linha cheia = LTN (ANBIMA) &middot; tracejada = DI1 (B3) do vencimento equivalente</div>' +
-      '<div class="chart-wrap" style="height:300px"><canvas id="{P}-sprTaxa"></canvas></div>' +
-    '</div>',
-  render: function(mod) {
-    var store = mod.M.casada || {};
-    var datesDI = mod.dates.filter(function(d) { return store[d] && Object.keys(store[d]).length; });
-    if (!datesDI.length) {
-      mod.el('sprHint').textContent = 'Nenhum dado de casada no arquivo.';
-      ['spr-c', 'spr-p', 'spr-t'].forEach(mod.killChart); return;
-    }
-    var d0 = datesDI[datesDI.length - 1];
-    var vencAtivos = Object.keys(store[d0]).sort();
-    if (!sprSel) {   // padrão: curto, meio e longo
-      sprSel = [vencAtivos[0], vencAtivos[Math.floor(vencAtivos.length / 2)], vencAtivos[vencAtivos.length - 1]]
-        .filter(function(v, i, a) { return v && a.indexOf(v) === i; });
-    }
-    sprSel = sprSel.filter(function(v) { return vencAtivos.indexOf(v) >= 0 || mod.ALL_VENC.indexOf(v) >= 0; });
-    function colorOf(v) { return COLORS[vencAtivos.indexOf(v) >= 0 ? vencAtivos.indexOf(v) % COLORS.length : 7]; }
-
-    var chips = mod.el('sprChips');
-    chips.innerHTML = vencAtivos.map(function(v) {
-      var on = sprSel.indexOf(v) >= 0, c = colorOf(v);
-      return '<span class="chip' + (on ? ' on' : '') + '" data-v="' + v + '" style="' + (on ? 'background:' + c + ';border-color:' + c : '') + '">' + fmt(v) + '</span>';
-    }).join('');
-    chips.querySelectorAll('.chip').forEach(function(ch) {
-      ch.addEventListener('click', function() {
-        var v = this.getAttribute('data-v'), i = sprSel.indexOf(v);
-        if (i >= 0) { sprSel.splice(i, 1); } else { sprSel.push(v); sprSel.sort(); }
-        TAB_SPREAD.render(mod);
+      // Tabela
+      var h = '<table class="tbl"><thead><tr><th>Vencimento</th><th>DU</th>' + (opts.durationCol ? '<th>Duration (DU)</th>' : '');
+      ms.forEach(function(k) {
+        var def = METRICS[k];
+        h += '<th class="grp">' + def.label + '</th>' + (def.delta ? '<th>&Delta; (' + def.delta.unit + ')</th>' : '');
+        if (k === 'taxa') { h += '<th class="grp">DI1</th>'; }
       });
-    });
-
-    var dates = periodFilter(datesDI, parseInt(mod.el('sprPeriod').value, 10) || 0);
-    var showMM = mod.el('sprMM').checked;
-    mod.el('sprHint').textContent = 'Casada e % do CDI disponíveis de ' + fmt(datesDI[0]) + ' a ' + fmt(d0) +
-      ' (início do histórico de DI1 na base B3). Clique nos vencimentos para ligar/desligar.';
-    var keep = subsample(dates.length, 400);
-    var lbls = keep.map(function(i) { return fmt(dates[i]); });
-    function series(k, v) {
-      var s = mod.M[k] || {};
-      return dates.map(function(d) { return s[d] && s[d][v] !== undefined ? s[d][v] : null; });
+      h += '</tr></thead><tbody>';
+      venc.forEach(function(v) {
+        h += '<tr><td>' + fmt(v) + '</td><td>' + (mod.getVencDU(v, d0) || '') + '</td>';
+        if (opts.durationCol) { var du = metricVal(mod, 'duration', d0, v); h += '<td>' + (du !== null ? du.toFixed(0) : '&ndash;') + '</td>'; }
+        ms.forEach(function(k) {
+          var def = METRICS[k], x0 = metricVal(mod, k, d0, v), xI = metricVal(mod, k, dI, v);
+          h += '<td class="grp">' + (x0 !== null ? def.cell(x0) : '&ndash;') + '</td>';
+          if (def.delta) { h += '<td>' + fmtDelta(x0 !== null && xI !== null ? (x0 - xI) * def.delta.mult : null, def.delta.unit) + '</td>'; }
+          if (k === 'taxa') { var di = metricVal(mod, 'taxa_di', d0, v); h += '<td class="grp">' + (di !== null ? di.toFixed(2) + '%' : '&ndash;') + '</td>'; }
+        });
+        h += '</tr>';
+      });
+      mod.el('resTbl').innerHTML = h + '</tbody></table>';
     }
-    function sub(arr) { return keep.map(function(i) { return arr[i]; }); }
+  };
+  return tab;
+}
 
-    var dsC = [], dsP = [], dsT = [];
-    sprSel.forEach(function(v) {
-      var c = colorOf(v), lab = fmt(v);
-      var sc = series('casada', v), sp = series('pct_cdi', v);
-      var base = { borderColor: c, backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, pointHoverRadius: 4, tension: 0.2, spanGaps: false };
-      dsC.push(Object.assign({ label: lab, data: sub(sc) }, base));
-      dsP.push(Object.assign({ label: lab, data: sub(sp) }, base));
-      if (showMM) {
-        var mmBase = { borderColor: hexA(c, 0.6), backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [6,3], pointRadius: 0, tension: 0.2, spanGaps: true };
-        dsC.push(Object.assign({ label: 'MM21 ' + lab, data: sub(movingAvg(sc, 21)) }, mmBase));
-        dsP.push(Object.assign({ label: 'MM21 ' + lab, data: sub(movingAvg(sp, 21)) }, mmBase));
+// ── Aba de spreads (histórico por vencimento) ──
+//   opts.metrics: gráficos de spread · opts.titulos: rótulos dos gráficos · opts.nomeTitulo: 'LTN' / 'NTN-F'
+function makeSpreadTab(opts) {
+  var sel = null;   // vencimentos selecionados (estado próprio de cada título)
+  var ms = opts.metrics;
+  var tab = {
+    id: 'spr', label: opts.label,
+    html:
+      '<div class="card"><div class="lbl">Vencimentos</div>' +
+        '<div class="chips" id="{P}-sprChips"></div>' +
+        '<div class="ctrl-row" style="margin-top:14px"><label>Per&iacute;odo:</label>' +
+          '<select id="{P}-sprPeriod"><option value="0">Todo o hist&oacute;rico com DI</option><option value="365">&Uacute;ltimo ano</option>' +
+          '<option value="180" selected>&Uacute;ltimos 6 meses</option><option value="90">&Uacute;ltimos 3 meses</option><option value="30">&Uacute;ltimo m&ecirc;s</option></select>' +
+          '<label class="metric-chk"><input type="checkbox" id="{P}-sprMM"><span style="color:#5a6a7a;font-weight:500">MM 21 dias</span></label>' +
+        '</div>' +
+        '<div class="dev-hint" id="{P}-sprHint" style="margin-top:10px"></div></div>' +
+      '<div class="card"><div class="legend" id="{P}-sprLeg"></div>' +
+        ms.map(function(k, i) {
+          return '<div class="lbl" style="margin-top:' + (i ? 22 : 6) + 'px">' + (opts.titulos[k] || METRICS[k].titulo) + '</div>' +
+                 '<div class="chart-wrap" style="height:300px"><canvas id="{P}-spr-' + k + '"></canvas></div>';
+        }).join('') +
+        '<div class="lbl" style="margin-top:22px">Taxa ' + opts.nomeTitulo + ' vs DI1 (% a.a.)</div>' +
+        '<div class="dev-hint">Linha cheia = ' + opts.nomeTitulo + ' (ANBIMA) &middot; tracejada = DI1 (B3) do vencimento equivalente</div>' +
+        '<div class="chart-wrap" style="height:300px"><canvas id="{P}-spr-taxa"></canvas></div>' +
+      '</div>',
+    render: function(mod) {
+      mod.el('sprPeriod').onchange = function() { tab.render(mod); };
+      mod.el('sprMM').onchange = function() { tab.render(mod); };
+      var ref = mod.M[ms[0]] || {};
+      var datesDI = mod.dates.filter(function(d) { return ref[d] && Object.keys(ref[d]).length; });
+      if (!datesDI.length) {
+        mod.el('sprHint').textContent = 'Nenhum dado de spread no arquivo.';
+        ms.concat(['taxa']).forEach(function(k) { mod.killChart('spr-' + k); });
+        return;
       }
-      dsT.push(Object.assign({ label: 'LTN ' + lab, data: sub(series('taxa', v)) }, base));
-      dsT.push(Object.assign({ label: 'DI1 ' + lab, data: sub(series('taxa_di', v)) }, base, { borderDash: [5,3], borderWidth: 1.5 }));
-    });
-    mod.el('sprLeg').innerHTML = sprSel.map(function(v) {
-      return '<div class="li"><div class="ld" style="background:' + colorOf(v) + '"></div><span>' + fmt(v) + '</span></div>';
-    }).join('') + (showMM ? '<div class="li"><div class="ld-dash" style="border-color:#8a9bb0"></div><span>MM 21 dias</span></div>' : '');
+      var d0 = datesDI[datesDI.length - 1];
+      var vencAtivos = Object.keys(ref[d0]).sort();
+      if (!sel) {   // padrão: curto, meio e longo
+        sel = [vencAtivos[0], vencAtivos[Math.floor(vencAtivos.length / 2)], vencAtivos[vencAtivos.length - 1]]
+          .filter(function(v, i, a) { return v && a.indexOf(v) === i; });
+      }
+      sel = sel.filter(function(v) { return vencAtivos.indexOf(v) >= 0; });
+      function colorOf(v) { var i = vencAtivos.indexOf(v); return COLORS[i >= 0 ? i % COLORS.length : 7]; }
 
-    mod.chart('spr-c', 'sprCasada', { type: 'line', data: { labels: lbls, datasets: dsC }, options: lineOptions(LTN_METRICS.casada.fmt, 'bps') });
-    mod.chart('spr-p', 'sprPct',    { type: 'line', data: { labels: lbls, datasets: dsP }, options: lineOptions(LTN_METRICS.pct_cdi.fmt, '% CDI') });
-    mod.chart('spr-t', 'sprTaxa',   { type: 'line', data: { labels: lbls, datasets: dsT }, options: lineOptions(LTN_METRICS.taxa.fmt, '% a.a.') });
-  }
-};
+      var chips = mod.el('sprChips');
+      chips.innerHTML = vencAtivos.map(function(v) {
+        var on = sel.indexOf(v) >= 0, c = colorOf(v);
+        return '<span class="chip' + (on ? ' on' : '') + '" data-v="' + v + '" style="' + (on ? 'background:' + c + ';border-color:' + c : '') + '">' + fmt(v) + '</span>';
+      }).join('');
+      chips.querySelectorAll('.chip').forEach(function(ch) {
+        ch.addEventListener('click', function() {
+          var v = this.getAttribute('data-v'), i = sel.indexOf(v);
+          if (i >= 0) { sel.splice(i, 1); } else { sel.push(v); sel.sort(); }
+          tab.render(mod);
+        });
+      });
 
+      var dates = periodFilter(datesDI, parseInt(mod.el('sprPeriod').value, 10) || 0);
+      var showMM = mod.el('sprMM').checked;
+      mod.el('sprHint').textContent = 'Dados de spread disponíveis de ' + fmt(datesDI[0]) + ' a ' + fmt(d0) +
+        ' (início do histórico de DI1 na base B3). Clique nos vencimentos para ligar/desligar.';
+      var keep = subsample(dates.length, 400);
+      var lbls = keep.map(function(i) { return fmt(dates[i]); });
+      // séries no histórico inteiro (MM sem "aquecimento" no início do período) e corte depois
+      var off = datesDI.length - dates.length;
+      function series(k, v) { return datesDI.map(function(d) { return metricVal(mod, k, d, v); }); }
+      function sub(arr) { return keep.map(function(i) { return arr[i + off]; }); }
+
+      var DS = {}; ms.concat(['taxa']).forEach(function(k) { DS[k] = []; });
+      sel.forEach(function(v) {
+        var c = colorOf(v), lab = fmt(v);
+        var base = { borderColor: c, backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, pointHoverRadius: 4, tension: 0.2, spanGaps: false };
+        var mmBase = { borderColor: hexA(c, 0.6), backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [6,3], pointRadius: 0, tension: 0.2, spanGaps: true };
+        ms.forEach(function(k) {
+          var s = series(k, v);
+          DS[k].push(Object.assign({ label: lab, data: sub(s) }, base));
+          if (showMM) { DS[k].push(Object.assign({ label: 'MM21 ' + lab, data: sub(movingAvg(s, 21)) }, mmBase)); }
+        });
+        DS.taxa.push(Object.assign({ label: opts.nomeTitulo + ' ' + lab, data: sub(series('taxa', v)) }, base));
+        DS.taxa.push(Object.assign({ label: 'DI1 ' + lab, data: sub(series('taxa_di', v)) }, base, { borderDash: [5,3], borderWidth: 1.5 }));
+      });
+      mod.el('sprLeg').innerHTML = sel.map(function(v) {
+        return '<div class="li"><div class="ld" style="background:' + colorOf(v) + '"></div><span>' + fmt(v) + '</span></div>';
+      }).join('') + (showMM ? '<div class="li"><div class="ld-dash" style="border-color:#8a9bb0"></div><span>MM 21 dias</span></div>' : '');
+
+      ms.concat(['taxa']).forEach(function(k) {
+        mod.chart('spr-' + k, 'spr-' + k, { type: 'line', data: { labels: lbls, datasets: DS[k] }, options: lineOptions(METRICS[k].fmt, METRICS[k].unit) });
+      });
+    }
+  };
+  return tab;
+}
+function casadaDesde(mod) {
+  var s = mod.M.casada || {}, ds = mod.dates.filter(function(d) { return s[d] && Object.keys(s[d]).length; });
+  return [['Casada desde', ds.length ? fmt(ds[0]) : '&ndash;']];
+}
+
+// ══════════════════════════════════════════════════════
+// LTN
+// ══════════════════════════════════════════════════════
 var LTN = CurveModule({
   key: 'ltn', nome: 'LTN', root: 'mp-ltn', csvUrl: 'dados/ltn.csv', parse: parseLong,
   defaultTab: 'res',
   tabOrder: ['res', 'curva', 'fwd', 'hist', 'spr', 'dados'],
-  curveMetrics: [LTN_METRICS.taxa, LTN_METRICS.casada, LTN_METRICS.pct_cdi],
-  extraTabs: [TAB_RESUMO, TAB_SPREAD],
+  curveMetrics: [METRICS.taxa, METRICS.casada, METRICS.pct_cdi],
+  extraTabs: [
+    makeResumoTab({ metrics: ['taxa', 'casada', 'pct_cdi'], titulos: { casada: 'Casada (bps &mdash; LTN &minus; DI1)' } }),
+    makeSpreadTab({ label: 'Casada &amp; % CDI', nomeTitulo: 'LTN', metrics: ['casada', 'pct_cdi'],
+                    titulos: { casada: 'Casada (bps) &mdash; taxa LTN ANBIMA &minus; DI1 ajuste B3', pct_cdi: '% do CDI' } })
+  ],
   fwdNote: 'LTN &eacute; zero cupom: a taxa indicativa j&aacute; &eacute; a taxa spot do vencimento, ent&atilde;o o forward &eacute; exato.',
   formatoHtml: '<b>Formato longo:</b> uma linha por data_referencia &times; data_vencimento<br>' +
                '<b>Colunas:</b> data_referencia, data_vencimento, taxa_pct_aa, pu, du, duration_du, duration_mod, taxa_di, casada_bps, pct_cdi<br>' +
                '<b>Casada</b> = taxa LTN (ANBIMA) &minus; DI1 ajuste (B3) do vencimento equivalente, em bps &middot; ' +
                '<b>% CDI</b> = calculado no Databricks',
-  extraStatus: function(mod) {
-    var s = mod.M.casada || {}, ds = mod.dates.filter(function(d) { return s[d] && Object.keys(s[d]).length; });
-    return [['Casada desde', ds.length ? fmt(ds[0]) : '&ndash;']];
-  },
-  onLoad: function(mod) {
-    mod.el('sprPeriod').onchange = function() { TAB_SPREAD.render(mod); };
-    mod.el('sprMM').onchange = function() { TAB_SPREAD.render(mod); };
-  }
+  extraStatus: casadaDesde
+});
+
+// ══════════════════════════════════════════════════════
+// NTN-F
+// ══════════════════════════════════════════════════════
+var NTNF = CurveModule({
+  key: 'ntnf', nome: 'NTN-F', root: 'mp-ntnf', csvUrl: 'dados/ntnf.csv', parse: parseLong,
+  defaultTab: 'res',
+  tabOrder: ['res', 'curva', 'fwd', 'hist', 'spr', 'dados'],
+  curveMetrics: [METRICS.taxa, METRICS.casada, METRICS.real_basis, METRICS.pct_cdi, METRICS.duration],
+  extraTabs: [
+    makeResumoTab({ metrics: ['taxa', 'casada', 'real_basis', 'pct_cdi'], durationCol: true,
+                    titulos: { casada: 'Casada (bps &mdash; NTN-F &minus; DI1 ponto)', real_basis: 'Real basis (bps &mdash; z-spread s/ curva DI1)',
+                               pct_cdi: '% do CDI (fator K s/ curva DI1)' } }),
+    makeSpreadTab({ label: 'Casada, Real basis &amp; % CDI', nomeTitulo: 'NTN-F', metrics: ['casada', 'real_basis', 'pct_cdi'],
+                    titulos: { casada: 'Casada (bps) &mdash; taxa NTN-F ANBIMA &minus; DI1 do vencimento equivalente (ponto &uacute;nico)',
+                               real_basis: 'Real basis (bps) &mdash; z-spread aditivo sobre a curva DI1 inteira (flat forward)',
+                               pct_cdi: '% do CDI &mdash; fator K multiplicativo sobre a curva DI1' } })
+  ],
+  fwdNote: '<b>Aten&ccedil;&atilde;o:</b> NTN-F paga cupom semestral; a taxa indicativa &eacute; uma TIR, n&atilde;o uma taxa spot. ' +
+           'O forward entre vencimentos &eacute; uma aproxima&ccedil;&atilde;o (como na NTN-B).',
+  formatoHtml: '<b>Formato longo:</b> uma linha por data_referencia &times; data_vencimento<br>' +
+               '<b>Colunas:</b> data_referencia, data_vencimento, taxa_pct_aa, pu, du, duration_du, duration_mod, taxa_di, casada_bps, real_basis_bps, pct_cdi<br>' +
+               '<b>Casada</b> = taxa NTN-F &minus; DI1 do vencimento equivalente &middot; ' +
+               '<b>Real basis</b> = z-spread sobre a curva DI1 &middot; <b>% CDI</b> = fator K sobre a curva DI1 (ambos via brentq no Databricks)<br>' +
+               '<b>DU e duration</b> contados a partir da liquida&ccedil;&atilde;o (D+1 &uacute;til)',
+  extraStatus: casadaDesde
 });
 
 // ══════════════════════════════════════════════════════
 // ABAS PRINCIPAIS E CARGA
 // ══════════════════════════════════════════════════════
-var MODULES = { ntnb: NTNB, ltn: LTN };
+var MODULES = { ntnb: NTNB, ltn: LTN, ntnf: NTNF };
 document.querySelectorAll('.main-tab-btn').forEach(function(b) {
   b.addEventListener('click', function() {
     var k = this.getAttribute('data-main');
