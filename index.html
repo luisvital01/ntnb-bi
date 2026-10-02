@@ -9,6 +9,8 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F7F3F2; color: #464343; min-height: 100vh; }
 .topbar { background: #464343; border-bottom: 3px solid #C7452D; padding: 14px 32px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.topbar-logo { display: flex; align-items: center; padding-right: 18px; margin-right: 2px; border-right: 1px solid #807C7B; }
+.topbar-logo img { height: 66px; width: auto; display: block; filter: url(#logo-branco); margin: -20px -12px -22px -10px; }  /* margens negativas: o PNG tem bordas transparentes */
 .topbar-info h1 { font-size: 18px; font-weight: 600; color: #fff; }
 .topbar-info p { font-size: 12px; color: #C9C3C2; margin-top: 2px; }
 .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
@@ -111,6 +113,8 @@ select:focus { border-color: #C7452D; }
 @media (max-width: 600px) {
   .container { padding: 16px; }
   .topbar { padding: 12px 16px; }
+  .topbar-logo img { height: 50px; margin: -15px -9px -17px -8px; }
+  .topbar-logo { border-right: none; padding-right: 0; flex-basis: 100%; }
   .card { padding: 16px; }
   .grid2, .grid3 { grid-template-columns: 1fr; }
 }
@@ -118,7 +122,14 @@ select:focus { border-color: #C7452D; }
 </head>
 <body>
 
+<!-- Filtro do logo: pinta de branco e deixa opaco (o PNG original é cinza e semitransparente) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="logo-branco" color-interpolation-filters="sRGB">
+    <feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 4.3 0"/>
+  </filter>
+</svg>
 <div class="topbar">
+  <div class="topbar-logo"><img src="LogoRena.png" alt="Warren Rena" onerror="this.parentNode.style.display='none'"></div>
   <div class="topbar-info">
     <h1>BI de Títulos Públicos</h1>
     <p>NTN-B &middot; LTN &middot; NTN-F &middot; LFT &middot; Curvas de juros &middot; Forwards DU/252 &middot; Calend&aacute;rio ANBIMA</p>
