@@ -630,7 +630,7 @@ function CurveModule(cfg) {
     });
     html += '</tr></thead><tbody>';
     venc.forEach(function(vi, i) {
-      html += '<tr><td class="rl">' + fmt(vi) + (flag[vi] ? ' <span title="DI extrapolado (duration além da curva DI1)" style="color:#8C6436">&#9888;</span>' : '') +
+      html += '<tr><td class="rl">' + fmt(vi) + (flag[vi] ? ' <span title="' + (base.flagTitle || 'DI extrapolado (duration além da curva DI1)') + '" style="color:#8C6436">&#9888;</span>' : '') +
         '<br><span style="font-weight:400;font-size:10px;color:#807C7B">' + rates[i].toFixed(base.dec || 2) + '% &middot; ' + Math.round(dus[i]) + ' ' + base.prazoLbl + '</span></td>';
       venc.forEach(function(vj, j) {
         if (i === j) { html += '<td class="cd">&mdash;</td>'; }
@@ -803,7 +803,9 @@ function parseWide(text) {
 var LONG_COLS = { taxa: 'taxa_pct_aa', pu: 'pu', du: 'du', duration: 'duration_du', duration_mod: 'duration_mod',
                   taxa_di: 'taxa_di', casada: 'casada_bps', real_basis: 'real_basis_bps', pct_cdi: 'pct_cdi',
                   taxa_di_dur: 'taxa_di_dur', implicita: 'implicita_pct', di_extrap: 'di_extrapolado',
-                  taxa_over: 'taxa_over', cdi: 'cdi_pct_aa', pct_cdi_proj: 'pct_cdi_proj', di_interp: 'di_interpolado' };
+                  taxa_over: 'taxa_over', cdi: 'cdi_pct_aa', pct_cdi_proj: 'pct_cdi_proj', di_interp: 'di_interpolado',
+                  taxa_dap: 'taxa_dap', taxa_di_venc: 'taxa_di_venc', implicita_dap: 'implicita_dap_pct', dap_interp: 'dap_interpolado',
+                  pct_cdi_casado: 'pct_cdi_casado' };
 function parseLong(text, opts) {
   opts = opts || {};
   var lines = text.split(/\r?\n/).filter(function(l) { return l.trim() !== ''; });
@@ -852,10 +854,21 @@ var METRICS = {
   taxa_di_dur:{ key: 'taxa_di_dur', label: 'DI na duration', titulo: 'DI1 interpolado na duration (% a.a.)', unit: '% a.a.', semDadoHint: SEM_DI,
                 fmt: function(v, ax) { return ax ? v.toFixed(2) + '%' : v.toFixed(2) + '% a.a.'; },
                 cell: function(v) { return v.toFixed(2) + '%'; }, delta: { mult: 100, unit: 'bps' } },
+  implicita_dap: { key: 'implicita_dap', label: 'Impl&iacute;cita via DAP', titulo: 'Infla&ccedil;&atilde;o impl&iacute;cita via DAP (% a.a.)', unit: '% a.a.', semDadoHint: SEM_DI,
+                fmt: function(v, ax) { return ax ? v.toFixed(2) + '%' : v.toFixed(2) + '% a.a.'; },
+                cell: function(v) { return v.toFixed(2) + '%'; }, delta: { mult: 100, unit: 'bps' } },
+  taxa_dap:   { key: 'taxa_dap', label: 'Taxa DAP', titulo: 'Taxa DAP (% a.a.)', unit: '% a.a.', semDadoHint: SEM_DI,
+                fmt: function(v, ax) { return ax ? v.toFixed(2) + '%' : v.toFixed(2) + '% a.a.'; },
+                cell: function(v) { return v.toFixed(2) + '%'; }, delta: { mult: 100, unit: 'bps' } },
+  pct_cdi_casado: { key: 'pct_cdi_casado', label: '% CDI casado', titulo: '% do CDI casado (taxa &divide; DI1 do vencimento)', unit: '% CDI', semDadoHint: SEM_DI,
+                fmt: function(v, ax) { return ax ? v.toFixed(1) + '%' : v.toFixed(2) + '% CDI'; },
+                cell: function(v) { return v.toFixed(2) + '%'; }, delta: { mult: 1, unit: 'p.p.' } },
   duration:   { key: 'duration', label: 'Duration (DU)', titulo: 'Duration de Macaulay (DU)', unit: 'DU',
                 fmt: function(v, ax) { return ax ? v.toFixed(0) : v.toFixed(1) + ' DU'; },
                 cell: function(v) { return v.toFixed(0); }, delta: null }
 };
+// NTN-B: a coluna casada_bps é NTN-B − DAP (mesma chave 'casada', rótulo próprio)
+var CASADA_DAP = Object.assign({}, METRICS.casada, { label: 'Casada c/ DAP', titulo: 'Casada c/ DAP (bps &mdash; NTN-B &minus; DAP)' });
 function lastDatesWith(mod, key, n) {
   var store = mod.M[key] || {}, out = [];
   for (var i = mod.dates.length - 1; i >= 0 && out.length < n; i--) {
@@ -875,6 +888,7 @@ function metricVal(mod, k, d, v) { var s = mod.M[k] || {}; return s[d] && s[d][v
 //   opts.metrics: métricas com gráfico e Δ na tabela · opts.durationCol: mostra coluna de duration
 function makeResumoTab(opts) {
   var ms = opts.metrics;
+  var REF = opts.taxaRef || { key: 'taxa_di', label: 'DI1' };
   var grid = ms.length === 4 ? 'grid2' : 'grid3';
   var deltaUnits = [];
   function DEF(k) { return (opts.defs && opts.defs[k]) || METRICS[k]; }
@@ -921,7 +935,7 @@ function makeResumoTab(opts) {
       ms.forEach(function(k) {
         var def = DEF(k);
         h += '<th class="grp">' + def.label + '</th>' + (def.delta ? '<th>&Delta; (' + def.delta.unit + ')</th>' : '');
-        if (k === 'taxa') { h += '<th class="grp">DI1</th>'; }
+        if (k === 'taxa') { h += '<th class="grp">' + REF.label + '</th>'; }
       });
       h += '</tr></thead><tbody>';
       venc.forEach(function(v) {
@@ -931,7 +945,7 @@ function makeResumoTab(opts) {
           var def = DEF(k), x0 = metricVal(mod, k, d0, v), xI = metricVal(mod, k, dI, v);
           h += '<td class="grp">' + (x0 !== null ? def.cell(x0) : '&ndash;') + '</td>';
           if (def.delta) { h += '<td>' + fmtDelta(x0 !== null && xI !== null ? (x0 - xI) * def.delta.mult : null, def.delta.unit) + '</td>'; }
-          if (k === 'taxa') { var di = metricVal(mod, 'taxa_di', d0, v); h += '<td class="grp">' + (di !== null ? di.toFixed(2) + '%' : '&ndash;') + '</td>'; }
+          if (k === 'taxa') { var di = metricVal(mod, REF.key, d0, v); h += '<td class="grp">' + (di !== null ? di.toFixed(2) + '%' : '&ndash;') + '</td>'; }
         });
         h += '</tr>';
       });
@@ -946,6 +960,7 @@ function makeResumoTab(opts) {
 function makeSpreadTab(opts) {
   var sel = null;   // vencimentos selecionados (estado próprio de cada título)
   var ms = opts.metrics;
+  var REF = opts.taxaRef || { key: 'taxa_di', label: 'DI1', desc: 'DI1 (B3) do vencimento equivalente' };
   function DEF(k) { return (opts.defs && opts.defs[k]) || METRICS[k]; }
   var CH = opts.semTaxa ? ms.slice() : ms.concat(['taxa']);   // gráficos desenhados
   var tab = {
@@ -965,8 +980,8 @@ function makeSpreadTab(opts) {
                  '<div class="chart-wrap" style="height:300px"><canvas id="{P}-spr-' + k + '"></canvas></div>';
         }).join('') +
         (opts.semTaxa ? '' :
-        '<div class="lbl" style="margin-top:22px">Taxa ' + opts.nomeTitulo + ' vs DI1 (% a.a.)</div>' +
-        '<div class="dev-hint">Linha cheia = ' + opts.nomeTitulo + ' (ANBIMA) &middot; tracejada = DI1 (B3) do vencimento equivalente</div>' +
+        '<div class="lbl" style="margin-top:22px">Taxa ' + opts.nomeTitulo + ' vs ' + REF.label + ' (% a.a.)</div>' +
+        '<div class="dev-hint">Linha cheia = ' + opts.nomeTitulo + ' (ANBIMA) &middot; tracejada = ' + REF.desc + '</div>' +
         '<div class="chart-wrap" style="height:300px"><canvas id="{P}-spr-taxa"></canvas></div>') +
       '</div>',
     render: function(mod) {
@@ -1024,7 +1039,7 @@ function makeSpreadTab(opts) {
         });
         if (!opts.semTaxa) {
         DS.taxa.push(Object.assign({ label: opts.nomeTitulo + ' ' + lab, data: sub(series('taxa', v)) }, base));
-        DS.taxa.push(Object.assign({ label: 'DI1 ' + lab, data: sub(series('taxa_di', v)) }, base, { borderDash: [5,3], borderWidth: 1.5 }));
+        DS.taxa.push(Object.assign({ label: REF.label + ' ' + lab, data: sub(series(REF.key, v)) }, base, { borderDash: [5,3], borderWidth: 1.5 }));
         }
       });
       mod.el('sprLeg').innerHTML = sel.map(function(v) {
@@ -1048,21 +1063,40 @@ function casadaDesde(mod) {
 // ══════════════════════════════════════════════════════
 var NTNB = CurveModule({
   key: 'ntnb', nome: 'NTN-B', root: 'mp-ntnb', csvUrl: 'dados/ntnb.csv', parse: parseLong,
-  curveMetrics: [METRICS.taxa, METRICS.implicita, METRICS.taxa_di_dur, METRICS.duration],
+  defaultTab: 'res',
+  tabOrder: ['res', 'curva', 'fwd', 'hist', 'spr', 'dados'],
+  curveMetrics: [METRICS.taxa, METRICS.taxa_dap, CASADA_DAP, METRICS.implicita, METRICS.implicita_dap, METRICS.taxa_di_dur, METRICS.duration],
   fwdBases: [
     { key: 'taxa', label: 'Taxa real', short: '', rate: 'taxa', prazo: 'du', prazoLbl: 'DU' },
-    { key: 'implicita', label: 'Infla&ccedil;&atilde;o impl&iacute;cita', short: 'Impl.', rate: 'implicita', prazo: 'duration', prazoLbl: 'Dur',
-      flag: 'di_extrap', semDado: 'Sem infla&ccedil;&atilde;o impl&iacute;cita nesta data (DI1 da B3 dispon&iacute;vel a partir de fev/2025)' }
+    { key: 'implicita', label: 'Infla&ccedil;&atilde;o impl&iacute;cita (DI na duration)', short: 'Impl.', rate: 'implicita', prazo: 'duration', prazoLbl: 'Dur',
+      flag: 'di_extrap', semDado: 'Sem infla&ccedil;&atilde;o impl&iacute;cita nesta data (DI1 da B3 dispon&iacute;vel a partir de fev/2025)' },
+    { key: 'implicita_dap', label: 'Infla&ccedil;&atilde;o impl&iacute;cita via DAP', short: 'Impl. DAP', rate: 'implicita_dap', prazo: 'du', prazoLbl: 'DU',
+      flag: 'dap_interp', flagTitle: 'DAP interpolado (sem vencimento exato de DAP)',
+      semDado: 'Sem impl&iacute;cita via DAP nesta data (DAP da B3 indispon&iacute;vel)' }
   ],
-  fwdNote: '<b>Base taxa real:</b> du = DU at&eacute; o vencimento. <b>Base impl&iacute;cita:</b> du = duration de Macaulay (DU) de cada vencimento &mdash; ' +
-           '&eacute; o ponto onde o DI foi interpolado, ent&atilde;o &eacute; onde a impl&iacute;cita est&aacute; definida.<br>' +
-           '&#9888; = DI extrapolado (duration al&eacute;m do &uacute;ltimo vencimento de DI1).',
+  extraTabs: [
+    makeResumoTab({ metrics: ['taxa', 'casada', 'implicita', 'implicita_dap'], durationCol: true, defs: { casada: CASADA_DAP },
+                    taxaRef: { key: 'taxa_dap', label: 'DAP' },
+                    titulos: { implicita: 'Infla&ccedil;&atilde;o impl&iacute;cita (DI1 na duration)' },
+                    deltaNote: 'Taxa, casada e impl&iacute;citas em bps.' }),
+    makeSpreadTab({ label: 'Casada &amp; Impl&iacute;cita', nomeTitulo: 'NTN-B', metrics: ['casada', 'implicita', 'implicita_dap'], defs: { casada: CASADA_DAP },
+                    taxaRef: { key: 'taxa_dap', label: 'DAP', desc: 'DAP (B3) do vencimento equivalente (interpolado quando n&atilde;o h&aacute; vencimento exato)' },
+                    hint: 'Casada/implícita disponíveis de {ini} a {fim} (início do histórico de DI1/DAP na base B3).',
+                    titulos: { casada: 'Casada c/ DAP (bps) &mdash; taxa NTN-B ANBIMA &minus; DAP ajuste B3',
+                               implicita: 'Infla&ccedil;&atilde;o impl&iacute;cita via DI &mdash; (1 + DI1 na duration) / (1 + NTN-B) &minus; 1',
+                               implicita_dap: 'Infla&ccedil;&atilde;o impl&iacute;cita via DAP &mdash; (1 + DI1 no vencimento) / (1 + DAP) &minus; 1' } })
+  ],
+  fwdNote: '<b>Base taxa real:</b> du = DU at&eacute; o vencimento. <b>Base impl&iacute;cita (DI):</b> du = duration de Macaulay (DU) de cada vencimento &mdash; ' +
+           '&eacute; o ponto onde o DI foi interpolado. <b>Base impl&iacute;cita via DAP:</b> du = DU at&eacute; o vencimento (DAP e DI1 no mesmo vencimento).<br>' +
+           '&#9888; = DI extrapolado (base DI) ou DAP interpolado (base DAP).',
   formatoHtml: '<b>Formato longo:</b> uma linha por data_referencia &times; data_vencimento<br>' +
-               '<b>Colunas:</b> data_referencia, data_vencimento, taxa_pct_aa, pu, du, duration_du, duration_mod, taxa_di_dur, implicita_pct, di_extrapolado<br>' +
-               '<b>Impl&iacute;cita</b> = (1 + DI1 interpolado na duration) / (1 + taxa real NTN-B) &minus; 1 &middot; interpola&ccedil;&atilde;o flat forward na curva DI1 (B3)',
+               '<b>Colunas:</b> data_referencia, data_vencimento, taxa_pct_aa, pu, du, duration_du, duration_mod, taxa_di_dur, implicita_pct, di_extrapolado, ' +
+               'taxa_dap, casada_bps, taxa_di_venc, implicita_dap_pct, dap_interpolado<br>' +
+               '<b>Impl&iacute;cita</b> = (1 + DI1 interpolado na duration) / (1 + taxa real NTN-B) &minus; 1 &middot; ' +
+               '<b>Casada</b> = taxa NTN-B &minus; DAP, em bps &middot; <b>Impl&iacute;cita via DAP</b> = (1 + DI1 no vencimento) / (1 + DAP) &minus; 1',
   extraStatus: function(mod) {
-    var s = mod.M.implicita || {}, ds = mod.dates.filter(function(d) { return s[d] && Object.keys(s[d]).length; });
-    return [['Impl&iacute;cita desde', ds.length ? fmt(ds[0]) : '&ndash;']];
+    function desde(k) { var s = mod.M[k] || {}, ds = mod.dates.filter(function(d) { return s[d] && Object.keys(s[d]).length; }); return ds.length ? fmt(ds[0]) : '&ndash;'; }
+    return [['Impl&iacute;cita desde', desde('implicita')], ['DAP desde', desde('taxa_dap')]];
   }
 });
 
@@ -1094,22 +1128,24 @@ var NTNF = CurveModule({
   key: 'ntnf', nome: 'NTN-F', root: 'mp-ntnf', csvUrl: 'dados/ntnf.csv', parse: parseLong,
   defaultTab: 'res',
   tabOrder: ['res', 'curva', 'fwd', 'hist', 'spr', 'dados'],
-  curveMetrics: [METRICS.taxa, METRICS.casada, METRICS.real_basis, METRICS.pct_cdi, METRICS.duration],
+  curveMetrics: [METRICS.taxa, METRICS.casada, METRICS.real_basis, METRICS.pct_cdi, METRICS.pct_cdi_casado, METRICS.duration],
   extraTabs: [
-    makeResumoTab({ metrics: ['taxa', 'casada', 'real_basis', 'pct_cdi'], durationCol: true,
+    makeResumoTab({ metrics: ['taxa', 'casada', 'real_basis', 'pct_cdi', 'pct_cdi_casado'], durationCol: true,
                     titulos: { casada: 'Casada (bps &mdash; NTN-F &minus; DI1 ponto)', real_basis: 'Real basis (bps &mdash; z-spread s/ curva DI1)',
-                               pct_cdi: '% do CDI (fator K s/ curva DI1)' } }),
-    makeSpreadTab({ label: 'Casada, Real basis &amp; % CDI', nomeTitulo: 'NTN-F', metrics: ['casada', 'real_basis', 'pct_cdi'],
+                               pct_cdi: '% do CDI curva (fator K s/ curva DI1)', pct_cdi_casado: '% do CDI casado (NTN-F &divide; DI1 do vencimento)' } }),
+    makeSpreadTab({ label: 'Casada, Real basis &amp; % CDI', nomeTitulo: 'NTN-F', metrics: ['casada', 'real_basis', 'pct_cdi', 'pct_cdi_casado'],
                     titulos: { casada: 'Casada (bps) &mdash; taxa NTN-F ANBIMA &minus; DI1 do vencimento equivalente (ponto &uacute;nico)',
                                real_basis: 'Real basis (bps) &mdash; z-spread aditivo sobre a curva DI1 inteira (flat forward)',
-                               pct_cdi: '% do CDI &mdash; fator K multiplicativo sobre a curva DI1' } })
+                               pct_cdi: '% do CDI curva &mdash; fator K multiplicativo sobre a curva DI1',
+                               pct_cdi_casado: '% do CDI casado &mdash; taxa NTN-F &divide; DI1 do vencimento equivalente' } })
   ],
   fwdNote: '<b>Aten&ccedil;&atilde;o:</b> NTN-F paga cupom semestral; a taxa indicativa &eacute; uma TIR, n&atilde;o uma taxa spot. ' +
            'O forward entre vencimentos &eacute; uma aproxima&ccedil;&atilde;o (como na NTN-B).',
   formatoHtml: '<b>Formato longo:</b> uma linha por data_referencia &times; data_vencimento<br>' +
-               '<b>Colunas:</b> data_referencia, data_vencimento, taxa_pct_aa, pu, du, duration_du, duration_mod, taxa_di, casada_bps, real_basis_bps, pct_cdi<br>' +
+               '<b>Colunas:</b> data_referencia, data_vencimento, taxa_pct_aa, pu, du, duration_du, duration_mod, taxa_di, casada_bps, real_basis_bps, pct_cdi, pct_cdi_casado<br>' +
                '<b>Casada</b> = taxa NTN-F &minus; DI1 do vencimento equivalente &middot; ' +
-               '<b>Real basis</b> = z-spread sobre a curva DI1 &middot; <b>% CDI</b> = fator K sobre a curva DI1 (ambos via brentq no Databricks)<br>' +
+               '<b>Real basis</b> = z-spread sobre a curva DI1 &middot; <b>% CDI curva</b> = fator K sobre a curva DI1 (ambos via brentq no Databricks) &middot; ' +
+               '<b>% CDI casado</b> = taxa NTN-F &divide; DI1 do vencimento<br>' +
                '<b>DU e duration</b> contados a partir da liquida&ccedil;&atilde;o (D+1 &uacute;til)',
   extraStatus: casadaDesde
 });
@@ -1183,7 +1219,12 @@ var DL_CAMPOS = [   // chave interna (mod.M) → rótulo e nome da coluna no arq
   { k: 'taxa_di_dur',  lbl: 'DI na duration',         col: 'taxa_di_dur' },
   { k: 'implicita',    lbl: 'Infla&ccedil;&atilde;o impl&iacute;cita', col: 'implicita_pct' },
   { k: 'di_extrap',    lbl: 'DI extrapolado (0/1)',   col: 'di_extrapolado' },
-  { k: 'di_interp',    lbl: 'DI interpolado (0/1)',   col: 'di_interpolado' }
+  { k: 'di_interp',    lbl: 'DI interpolado (0/1)',   col: 'di_interpolado' },
+  { k: 'pct_cdi_casado', lbl: '% CDI casado',         col: 'pct_cdi_casado' },
+  { k: 'taxa_dap',     lbl: 'Taxa DAP',               col: 'taxa_dap' },
+  { k: 'taxa_di_venc', lbl: 'DI no vencimento',       col: 'taxa_di_venc' },
+  { k: 'implicita_dap', lbl: 'Impl&iacute;cita via DAP', col: 'implicita_dap_pct' },
+  { k: 'dap_interp',   lbl: 'DAP interpolado (0/1)',  col: 'dap_interpolado' }
 ];
 var XLSX_URL = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
 
